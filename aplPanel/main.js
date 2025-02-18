@@ -62,7 +62,16 @@ let statsData;
  */
 export const aplPanelServe = (app) => {
 
-	app.use('/dashboard', express.static(path.resolve('./aplPanel/public')));
+	app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
+		setHeaders: (res, urlPath) => {
+			// 指示浏览器缓存静态文件
+			if(urlPath.endsWith('.html')){
+				res.setHeader('Cache-Control', 'no-cache');
+			}else{
+				res.setHeader('Cache-Control', 'public, max-age=31536000');
+			}
+		}
+	}));
 
 	app.get('/dashboard/api/stats', async (req, res, next) => {
 		// 提供 statsData
