@@ -11,6 +11,9 @@ Node-OpenBMCLAPI Dashboard
 1. 运行 OpenBMCLAPI
 2. 打开面板地址: http://127.0.0.1:4000/dashboard/
 
+### 更新
+通常, 直接覆盖文件即可.
+
 ### 卸载
 1. 运行 `node ./aplPanel/uninstall.js`, 等待显示 `卸载完毕`
 2. 删除 `aplPanel` 目录
