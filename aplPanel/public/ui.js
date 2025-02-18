@@ -156,7 +156,7 @@ const loadStatsData = async () => {
 		const bytesData = [];
 
 		for(const hourData of statsData.hours){
-			xAxisData.unshift(`${time.getMonth() + 1}-${time.getDate()} ${time.getHours()}:00`);
+			xAxisData.unshift(`${time.getHours()}时`);
 			hitsData.push(hourData.hits);
 			bytesData.push(hourData.bytes);
 			time.setHours(time.getHours() - 1);
