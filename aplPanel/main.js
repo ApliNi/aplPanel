@@ -261,7 +261,7 @@ export const aplPanelListener = async (req, bytes, hits) => {
 		if(statsData._worker.mainThread === ThreadTime){
 
 			ThreadModeMain = true;
-			console.log(`[AplPanel] 保存统计数据`, new Date());
+			// console.log(`[AplPanel] 保存统计数据`, new Date());
 
 			// 收集同步线程的数据
 			addObjValueNumber(statsDataTemp, statsData._worker.syncData);
@@ -286,7 +286,7 @@ export const aplPanelListener = async (req, bytes, hits) => {
 
 			if(ThreadModeMain) console.log(`[AplPanel] ${ThreadTime} 将作为同步线程运行`);
 			ThreadModeMain = false;
-			console.log(`[AplPanel] 同步统计数据`, new Date());
+			// console.log(`[AplPanel] 同步统计数据`, new Date());
 
 			// 仅同步
 			addObjValueNumber(statsData._worker.syncData, statsDataTemp, true);
