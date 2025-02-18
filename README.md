@@ -1,0 +1,2 @@
+# aplPanel
+Node-OpenBmclApi Dashboard
