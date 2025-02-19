@@ -123,12 +123,15 @@ body {
 @media (max-width: 1150px) {
 	.layout {
 		display: block;
+		.chart {
+			width: 100% !important;
+		}
 		.side {
 			margin-left: 0;
 			margin-top: 20px;
-		}
-		.chart {
-			width: 100% !important;
+			.chart {
+				margin-left: 0;
+			}
 		}
 	}
 }

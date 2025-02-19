@@ -1,6 +1,5 @@
 import express from 'express';
-import { existsSync, mkdirSync, readFile, writeFile, writeFileSync } from 'fs';
-import { readdir } from 'fs/promises';
+import { existsSync, mkdirSync, readFile, readFileSync, writeFile, writeFileSync } from 'fs';
 import path from 'path';
 
 const dataPath = path.resolve('./aplPanel/data');
@@ -130,6 +129,28 @@ export const aplPanelServe = (_app) => {
 			statsDataTemp: statsDataTemp,
 		});
 	});
+};
+
+/**
+ * 这用于支持每次请求上线时都使用单独的最新地址信息, 配合其他特殊内网穿透工具使用
+ * @param {String} host - 默认域名
+ * @param {Number} port - 默认端口
+ */
+export const aplPaneReplaceAddr = (host, port) => {
+	const address = { host: host, port: port };
+	try{
+		// 从根目录读取动态地址文件
+		const addrFilePath = path.resolve('./aplPanelAddress.json');
+		if(existsSync(addrFilePath)){
+			const addr = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }) || '{}');
+			address.host = addr[process.env.CLUSTER_ID]?.host ?? addr[process.env.CLUSTER_PORT]?.host ?? addr.host ?? host;
+			address.port = addr[process.env.CLUSTER_ID]?.port ?? addr[process.env.CLUSTER_PORT]?.port ?? addr.port ?? port;
+			console.log(`[AplPanel] 注册节点: ${address.host}:${address.port}`);
+		}
+	}catch(err){
+		console.warn(`[AplPanel] 读取动态地址文件时出错`, err);
+	}
+	return address;
 };
 
 (async () => {
