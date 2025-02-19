@@ -302,7 +302,7 @@ export const aplPanelServe = (_app) => {
 			ThreadModeMain = true;
 			// console.log(`[AplPanel] 保存统计数据`, new Date());
 
-			await sleep(500);
+			await sleep(1000);
 
 			// 收集同步线程的数据
 			addObjValueNumber(statsDataTemp, statsData._worker.syncData);

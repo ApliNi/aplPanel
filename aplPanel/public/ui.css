@@ -134,7 +134,7 @@ body {
 	}
 }
 
-@media(max-width: 1150px){
+@media (max-width: 1150px) {
 	.layout {
 		display: block;
 		.side {
@@ -145,6 +145,9 @@ body {
 			width: 100% !important;
 		}
 	}
+}
+
+@media (prefers-color-scheme: dark) {
 	#chart_stats_rv_heatmap {
 		.heatmap > div {
 			&.lv-0 {
