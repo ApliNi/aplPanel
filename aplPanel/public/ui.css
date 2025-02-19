@@ -6,6 +6,7 @@
 	width: 100%;
 	height: 64px;
 	background-color: #000;
+	z-index: 100;
 }
 
 .topBarTitle {
@@ -16,12 +17,24 @@
 	color: #fff;
 }
 
+.statsInfo {
+	background: linear-gradient(#00000000 50%, var(--cT) 0);
+	width: fit-content;
+	padding: 0 10px;
+	margin-left: 5px;
+	opacity: 0.9;
+	
+	span {
+		color: var(--c);
+	}
+}
+
 .layout {
 	display: flex;
-	padding-top: 84px;
 
 	h3 {
 		margin: 20px 0 0 17px;
+		z-index: 200;
 	}
 
 	.main {

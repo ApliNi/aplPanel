@@ -9,7 +9,17 @@ const lib = {
 			index++;
 		}
 		return `${value.toFixed(retainDecimals)}${unit[index]}`;
-	}
+	},
+
+	trafficFormat: (value, retainDecimals = 0) => {
+		const unit = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
+		let index = 0;
+		while(value >= 1024){
+			value /= 1024;
+			index++;
+		}
+		return `${value.toFixed(retainDecimals)}${unit[index]}`;
+	},
 };
 
 const loadLineChart = (el, data = {}, _data = {}) => {
@@ -118,12 +128,38 @@ const addObjValueNumber = (obj1, obj2, ueeObj2 = false) => {
 	}
 };
 
+let statsData = null;
+
+queueMicrotask(() => {
+	const statsRunTime = document.querySelector('.statsInfo .statsRunTime');
+	setInterval(() => {
+		if(statsData !== null){
+
+			const diff = Math.abs(Date.now() - statsData._worker.mainThread);
+			const totalSeconds = Math.floor(diff / 1000);
+			// 计算天时分秒
+			const days = Math.floor(totalSeconds / (3600 * 24));
+			const remainingSeconds = totalSeconds % (3600 * 24);
+			const hours = Math.floor(remainingSeconds / 3600);
+			const minutes = Math.floor((remainingSeconds % 3600) / 60);
+			const seconds = remainingSeconds % 60;
+			const parts = [];
+			if(days > 0)	parts.push(`${days}天`);
+			if(hours > 0)	parts.push(`${`${hours}`.padStart(2, '0')}时`);
+			parts.push(`${`${minutes}`.padStart(2, '0')}分`);
+			parts.push(`${`${seconds}`.padStart(2, '0')}秒`);
+
+			statsRunTime.textContent = parts.join('');
+		}
+	}, 1000);
+});
+
 const loadStatsData = async () => {
 	
 	const response = await fetch('./api/stats');
 	const data = await response.json();
 
-	const statsData = data.statsData;
+	statsData = data.statsData;
 	const statsDataTemp = data.statsDataTemp;
 
 	// 由前端合并统计数据后显示, 逻辑与后端一致
@@ -144,6 +180,14 @@ const loadStatsData = async () => {
 		statsData.years.at(-1).hits += statsDataTemp.hits;
 
 		addObjValueNumber(statsData.all, statsDataTemp, true);
+	})();
+
+
+	// 统计信息
+	(() => {
+		const statsInfo = document.querySelector('.statsInfo');
+		statsInfo.querySelector('.statsTotal').textContent = lib.numberFormat(statsData.all.hits);
+		statsInfo.querySelector('.statsTotalTraffic').textContent = lib.trafficFormat(statsData.all.bytes);
 	})();
 
 
