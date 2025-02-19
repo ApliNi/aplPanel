@@ -20,6 +20,15 @@ const lib = {
 		}
 		return `${value.toFixed(retainDecimals)}${unit[index]}`;
 	},
+
+	createElement: (tagName, data = null, options = {}) => {
+		const el = document.createElement(tagName, options);
+		if(data === null) return el;
+		for(const key in data){
+			el[key] = data[key];
+		}
+		return el;
+	},
 };
 
 const loadLineChart = (el, data = {}, _data = {}) => {
@@ -135,7 +144,7 @@ const loadBarChart = (el, data = {}, _data = {}) => {
 		}, 200);
 	});
 	ro.observe(el);
-	
+
 	const thisChart = echarts.init(el);
 	thisChart.setOption(Object.assign({
 		grid: {
@@ -264,6 +273,9 @@ const loadStatsData = async () => {
 
 		statsData.years.at(-1).bytes += statsDataTemp.bytes;
 		statsData.years.at(-1).hits += statsDataTemp.hits;
+
+		statsData.heatmap.at(-1)[0] += statsDataTemp.hits;
+		statsData.heatmap.at(-1)[1] += statsDataTemp.bytes;
 
 		addObjValueNumber(statsData.all, statsDataTemp, true);
 	})();
@@ -399,11 +411,106 @@ const loadStatsData = async () => {
 
 	// 目前不考虑年
 
+	new Promise(async (resolve, reject) => {
+
+		let hitsMin = 0;
+		let hitsMax = 0;
+		// let bytesMin = 0;
+		// let bytesMax = 0;
+		for(const li of statsData.heatmap){
+			hitsMin = Math.min(hitsMin, li[0]);
+			hitsMax = Math.max(hitsMax, li[0]);
+			// bytesMin = Math.min(bytesMin, li[1]);
+			// bytesMax = Math.max(bytesMax, li[1]);
+		}
+		const allocate = (value, min, max) => Math.min(Math.round((value - min) / (max - min) * 4), 4);
+
+		let time = new Date();
+		time.setDate(time.getDate() - 365);
+		// 从两端补齐到一年 + 一周的时间
+		const data = [ ...Array.from({ length: time.getDay() }, () => null), ...statsData.heatmap, ...Array.from({ length: 6 - time.getDay() }, () => null) ];
+
+		const heatmap = document.getElementById('chart_stats_rv_heatmap').querySelector('& > .heatmap') || (() => {
+
+			const root = document.getElementById('chart_stats_rv_heatmap');
+
+			const heatmap = lib.createElement('div', {
+				className: `heatmap`,
+				___lastData: Array.from({ length: data.length }, () => null),
+			});
+
+			const floating = lib.createElement('div', {
+				className: 'floating',
+			});
+
+			for(let i = 0; i < data.length; i++){
+				const li = lib.createElement('div', {
+					className: `null`,
+				})
+				li.addEventListener('mouseover', (event) => {
+					if(event.target.classList.contains('null')) return;
+					floating.classList.add('--join');
+					floating.style.top = `${event.target.offsetTop}px`;
+					floating.style.left = `${event.target.offsetLeft}px`;
+					floating.textContent = event.target.dataset.title;
+
+					const animationProcessing = () => {
+						const pos1 = floating.offsetLeft - (floating.offsetWidth + 10);
+						if(pos1 < 0){
+							floating.style.transform = `translate(calc(-50% - ${pos1 / 2}px), -34px)`;
+						}
+						const pos2 = (window.innerWidth - root.scrollLeft) - (floating.offsetLeft + (floating.offsetWidth + 10));
+						if(pos2 < 0){
+							floating.style.transform = `translate(calc(-50% + ${pos2 / 2}px), -34px)`;
+						}
+
+						const offsetLeft = floating.offsetLeft;
+						setTimeout(() => {
+							if(floating.offsetLeft !== offsetLeft){
+								animationProcessing();
+							}
+						}, 50);
+					};
+					animationProcessing();
+					
+				});
+				li.addEventListener('mouseout', (event) => {
+					floating.classList.remove('--join');
+				});
+				heatmap.appendChild(li);
+			}
+
+			root.appendChild(heatmap);
+			root.appendChild(floating);
+			return heatmap;
+		})();
+
+		let dateAdd = 0;
+		for(let i = 0; i < data.length; i++){
+
+			// 当新数据与旧数据存在差异时更新元素
+			if(heatmap.___lastData[i] === null || heatmap.___lastData[i][0] !== data[i][0] || heatmap.___lastData[i][1] !== data[i][1]){
+				if(data[i] === null) continue;
+				time.setDate(time.getDate() + dateAdd);
+				dateAdd = 0;
+
+				const day = heatmap.children[i];
+				day.className = `lv-${allocate(data[i][0], hitsMin, hitsMax)}`;
+				day.dataset.title = `${time.getFullYear()}-${`${time.getMonth() + 1}`.padStart(2, '0')}-${`${time.getDate()}`.padStart(2, '0')} - 请求: ${lib.numberFormat(data[i][0])}, 响应: ${lib.trafficFormat(data[i][1])}`;
+			}
+
+			dateAdd ++;
+		}
+
+		heatmap.___lastData = data;
+
+		resolve();
+	});
+
 	await new Promise(async (resolve, reject) => {
 
 		const pieData = [];
-		
-		
+
 		for(const deviceName in statsData.all.device){
 			pieData.push({
 				value: statsData.all.device[deviceName],
@@ -438,22 +545,19 @@ const loadStatsData = async () => {
 
 	await new Promise(async (resolve, reject) => {
 
-		// TODO: 等待后端更新 network 数据, 移除这里的预设
-		// 是否应该显示为百分比?
-
 		loadBarChart(document.getElementById('chart_stats_network_type'), {
 			series: [
 				{
 					type: 'bar',
 					data: [
 						{
-							value: statsData.network?.v4,
+							value: statsData.all.network.v4,
 							itemStyle: {
 								color: '#06B0FF'
 							}
 						},
 						{
-							value: statsData.network?.v6,
+							value: statsData.all.network.v6,
 							itemStyle: {
 								color: '#ff8c00'
 							}

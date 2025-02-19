@@ -2,7 +2,6 @@ import express from 'express';
 import { existsSync, mkdirSync, readFile, writeFile, writeFileSync } from 'fs';
 import { readdir } from 'fs/promises';
 import path from 'path';
-import { isIPv4, isIPv6 } from 'net';
 
 const dataPath = path.resolve('./aplPanel/data');
 
@@ -51,6 +50,7 @@ const statsDataTemp = {
 	network: {
 		v4: 0,
 		v6: 0,
+		none: 0,
 	},
 };
 for(const deviceName in deviceList){
@@ -72,8 +72,8 @@ let statsData;
  */
 export const aplPanelListener = async (req, bytes, hits) => {
 	try{
-		statsDataTemp.bytes += bytes;
 		statsDataTemp.hits += hits;
+		statsDataTemp.bytes += bytes;
 
 		const userAgent = req.headers['user-agent'] || '[Unknown]';
 		const deviceType = userAgent.slice(0, userAgent.indexOf('/'));
@@ -84,9 +84,11 @@ export const aplPanelListener = async (req, bytes, hits) => {
 		}
 
 		const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip;
-		if(isIPv4(ip)){
+		if(!ip){
+			statsDataTemp.network.none ++;
+		}else if(`${ip}`.startsWith('::ffff:')){
 			statsDataTemp.network.v4 ++;
-		}else if(isIPv6(ip)){
+		}else{
 			statsDataTemp.network.v6 ++;
 		}
 		
@@ -199,6 +201,8 @@ export const aplPanelServe = (_app) => {
 		}
 	};
 
+	const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 
 	// 创建数据目录
 	if(!existsSync(dataPath)){
@@ -236,6 +240,7 @@ export const aplPanelServe = (_app) => {
 		days:	Array.from({ length: 31 }, () => ({ hits: 0, bytes: 0 })),
 		months:	Array.from({ length: 13 }, () => ({ hits: 0, bytes: 0 })),
 		years:	Array.from({ length: 7 }, () => ({ hits: 0, bytes: 0 })),
+		heatmap: Array.from({ length: 365 }, () => ([ 0, 0 ])),
 		all:	deepMergeObject(statsDataTemp),
 		_worker: {
 			mainThread: 0,
@@ -262,6 +267,8 @@ export const aplPanelServe = (_app) => {
 		if(dayDiff > 0){
 			statsData.days.splice(0, dayDiff);
 			statsData.days.push(...Array.from({ length: Math.min(dayDiff, 31) }, () => ({ hits: 0, bytes: 0 })));
+			statsData.heatmap.splice(0, dayDiff);
+			statsData.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([ 0, 0 ])));
 			statsData.date.day += yearDiff;
 		}
 		const hourDiff = nowDate.hour - statsData.date.hour;
@@ -295,22 +302,27 @@ export const aplPanelServe = (_app) => {
 			ThreadModeMain = true;
 			// console.log(`[AplPanel] 保存统计数据`, new Date());
 
+			await sleep(500);
+
 			// 收集同步线程的数据
 			addObjValueNumber(statsDataTemp, statsData._worker.syncData);
 			statsData._worker.syncData = {};
 
 			// 保存数据到每个图表
-			statsData.hours.at(-1).bytes += statsDataTemp.bytes;
 			statsData.hours.at(-1).hits += statsDataTemp.hits;
+			statsData.hours.at(-1).bytes += statsDataTemp.bytes;
 	
-			statsData.days.at(-1).bytes += statsDataTemp.bytes;
 			statsData.days.at(-1).hits += statsDataTemp.hits;
+			statsData.days.at(-1).bytes += statsDataTemp.bytes;
 	
-			statsData.months.at(-1).bytes += statsDataTemp.bytes;
 			statsData.months.at(-1).hits += statsDataTemp.hits;
+			statsData.months.at(-1).bytes += statsDataTemp.bytes;
 	
-			statsData.years.at(-1).bytes += statsDataTemp.bytes;
 			statsData.years.at(-1).hits += statsDataTemp.hits;
+			statsData.years.at(-1).bytes += statsDataTemp.bytes;
+
+			statsData.heatmap.at(-1)[0] += statsDataTemp.hits;
+			statsData.heatmap.at(-1)[1] += statsDataTemp.bytes;
 
 			addObjValueNumber(statsData.all, statsDataTemp);
 
@@ -325,8 +337,8 @@ export const aplPanelServe = (_app) => {
 		}
 		
 		// 清空临时数据
-		statsDataTemp.bytes = 0;
 		statsDataTemp.hits = 0;
+		statsDataTemp.bytes = 0;
 		for(const key in statsDataTemp.device){
 			statsDataTemp.device[key] = 0;
 		}
