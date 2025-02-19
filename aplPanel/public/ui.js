@@ -99,6 +99,56 @@ const loadPieChart = (el, data = {}, _data = {}) => {
 	}, data));
 };
 
+const loadBarChart = (el, data = {}, _data = {}) => {
+	const chart_stats_rv_day = echarts.init(el);
+	chart_stats_rv_day.setOption(Object.assign({
+		grid: {
+			top: 30,
+			left: 55,
+			right: 25,
+			bottom: 30,
+		},
+		tooltip: {
+			trigger: 'axis',
+			axisPointer: {
+				type: 'cross', // 显示十字架指示
+				label: {
+					formatter: (data) => {
+						if(typeof data.value === 'number'){
+							return `${lib.numberFormat(data.value, 2)}`;
+						}
+						return data.value;
+					},
+				},
+			},
+		},
+		xAxis: {
+			type: 'value',
+			axisLabel: {
+				formatter: (value) => lib.numberFormat(value),
+			},
+			splitLine: {
+				show: true,
+				lineStyle: {
+					color: '#7F7F7F80',
+					type: 'solid',
+					width: 1
+				},
+			},
+			// max: (value) => Math.max(...Object.values(value)) * 1.1,
+		},
+		yAxis: {
+			data: ['IPv4', 'IPv6'],
+		},
+		series: [
+			{
+				type: 'bar',
+				data: [100, 200]
+			}
+		]
+	}, data));
+};
+
 /**
  * 相加两个对象的数值, 如果没有则创建
  * @param {Object} obj1 - 合并到对象
@@ -344,6 +394,35 @@ const loadStatsData = async () => {
 						color: '#7f7f7fb5'
 					},
 				},
+			]
+		})
+
+		resolve();
+	});
+
+	await new Promise(async (resolve, reject) => {
+
+		// TODO: 等待后端更新 network 数据, 移除这里的预设
+
+		loadBarChart(document.getElementById('chart_stats_network_type'), {
+			series: [
+				{
+					type: 'bar',
+					data: [
+						{
+							value: statsData.network?.v4 || 0,
+							itemStyle: {
+								color: '#06B0FF'
+							}
+						},
+						{
+							value: statsData.network?.v6 || 0,
+							itemStyle: {
+								color: '#ff8c00'
+							}
+						}
+					],
+				}
 			]
 		})
 

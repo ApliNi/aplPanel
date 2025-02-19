@@ -2,6 +2,7 @@ import express from 'express';
 import { existsSync, mkdirSync, readFile, writeFile, writeFileSync } from 'fs';
 import { readdir } from 'fs/promises';
 import path from 'path';
+import { isIPv4, isIPv6 } from 'net';
 
 const dataPath = path.resolve('./aplPanel/data');
 
@@ -47,6 +48,10 @@ const statsDataTemp = {
 	hits: 0,
 	bytes: 0,
 	device: {},
+	network: {
+		v4: 0,
+		v6: 0,
+	},
 };
 for(const deviceName in deviceList){
 	if(statsDataTemp.device[deviceName] === undefined){
@@ -57,6 +62,38 @@ for(const deviceName in deviceList){
 let statsData;
 
 // 添加导入 `import { aplPanelListener, aplPanelServe } from '../aplPanel/main.js';`
+
+/**
+ * 添加到代码之后 cluster.js, `const { bytes, hits } = await this.storage.express(hashPath, req, res, next);`
+ *   - `aplPanelListener(req, bytes, hits);`
+ * @param {import('express').Request} req
+ * @param {number} bytes - 这个文件的大小
+ * @param {number} hits - 命中次数 / 是否命中
+ */
+export const aplPanelListener = async (req, bytes, hits) => {
+	try{
+		statsDataTemp.bytes += bytes;
+		statsDataTemp.hits += hits;
+
+		const userAgent = req.headers['user-agent'] || '[Unknown]';
+		const deviceType = userAgent.slice(0, userAgent.indexOf('/'));
+		if(deviceList[deviceType]){
+			statsDataTemp.device[deviceType] ++;
+		}else{
+			statsDataTemp.device['[Other]'] ++;
+		}
+
+		const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip;
+		if(isIPv4(ip)){
+			statsDataTemp.network.v4 ++;
+		}else if(isIPv6(ip)){
+			statsDataTemp.network.v6 ++;
+		}
+		
+	}catch(err){
+		console.warn(`[AplPanel]`, err);
+	}
+};
 
 /**
  * 添加到代码之前 cluster.js, `app.get('/download/:hash(\\w+)', async (req, res, next) => {`
@@ -91,30 +128,6 @@ export const aplPanelServe = (_app) => {
 			statsDataTemp: statsDataTemp,
 		});
 	});
-};
-
-/**
- * 添加到代码之后 cluster.js, `const { bytes, hits } = await this.storage.express(hashPath, req, res, next);`
- *   - `aplPanelListener(req, bytes, hits);`
- * @param {import('express').Request} req
- * @param {number} bytes - 这个文件的大小
- * @param {number} hits - 命中次数 / 是否命中
- */
-export const aplPanelListener = async (req, bytes, hits) => {
-	try{
-		statsDataTemp.bytes += bytes;
-		statsDataTemp.hits += hits;
-
-		const userAgent = req.headers['user-agent'] || '[Unknown]';
-		const deviceType = userAgent.slice(0, userAgent.indexOf('/'));
-		if(deviceList[deviceType]){
-			statsDataTemp.device[deviceType] ++;
-		}else{
-			statsDataTemp.device['[Other]'] ++;
-		}
-	}catch(err){
-		console.warn(`[AplPanel]`, err);
-	}
 };
 
 (async () => {

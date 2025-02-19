@@ -15,6 +15,7 @@
 	width: 100%;
 	margin: 13.5px 0;
 	color: #fff;
+	z-index: 200;
 }
 
 .statsInfo {
@@ -34,7 +35,6 @@
 
 	h3 {
 		margin: 20px 0 0 17px;
-		z-index: 200;
 	}
 
 	.main {
@@ -50,6 +50,10 @@
 			width: 400px;
 			height: 300px;
 			margin-left: 25px;
+		}
+
+		#chart_stats_network_type {
+			height: 100px;
 		}
 	}
 }
