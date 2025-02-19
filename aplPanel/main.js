@@ -265,6 +265,7 @@ export const aplPaneReplaceAddr = (host, port) => {
 		all:	deepMergeObject(statsDataTemp),
 		_worker: {
 			mainThread: 0,
+			saveTime: 0,
 			syncData: {},
 		},
 	}, statsData);
@@ -363,12 +364,14 @@ export const aplPaneReplaceAddr = (host, port) => {
 		for(const key in statsDataTemp.device){
 			statsDataTemp.device[key] = 0;
 		}
+
+		statsData._worker.saveTime = Date.now();
 	
 		writeFile(statsFilePath, JSON.stringify(statsData), (err) => {
 			if(err) console.log(`[AplPanel] 保存统计数据失败`, err);
 		});
 		
-		// 计算到下一个每分钟过2秒的时间, 设置定时器
+		// [可爱的定时器] 计算到下一个每分钟过2秒的时间, 设置定时器
 		const nextTime = new Date();
 		nextTime.setMinutes(nextTime.getMinutes() + (nextTime.getSeconds() >= 2 ? 1 : 0));
 		nextTime.setSeconds(2);

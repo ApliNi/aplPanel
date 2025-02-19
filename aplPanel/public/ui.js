@@ -423,15 +423,14 @@ const loadStatsData = async () => {
 			// bytesMin = Math.min(bytesMin, li[1]);
 			// bytesMax = Math.max(bytesMax, li[1]);
 		}
-		const allocate = (value, min, max) => Math.min(Math.round((value - min) / (max - min) * 4), 4);
+		const allocate = (value, min, max) => Math.min(Math.max(value !== 0 ? 1 : 0, Math.round((value - min) / (max - min) * 4)), 4);
 
-		let time = new Date();
-		time.setDate(time.getDate() - 365);
+		const oneYearAgo = new Date();
+		oneYearAgo.setDate(oneYearAgo.getDate() - 365);
 		// 从两端补齐到一年 + 一周的时间
-		const data = [ ...Array.from({ length: time.getDay() }, () => null), ...statsData.heatmap, ...Array.from({ length: 6 - time.getDay() }, () => null) ];
+		const data = [ ...Array.from({ length: oneYearAgo.getDay() }, () => null), ...statsData.heatmap, ...Array.from({ length: 6 - oneYearAgo.getDay() }, () => null) ];
 
 		const heatmap = document.getElementById('chart_stats_rv_heatmap').querySelector('& > .heatmap') || (() => {
-
 			const root = document.getElementById('chart_stats_rv_heatmap');
 
 			const heatmap = lib.createElement('div', {
@@ -485,21 +484,23 @@ const loadStatsData = async () => {
 			return heatmap;
 		})();
 
-		let dateAdd = 0;
-		for(let i = 0; i < data.length; i++){
+		// 使用服务器的时间来计算数据
+		const time = new Date(statsData._worker.saveTime || Date.now());
+		let dayStep = 0;
+		for(let i = data.length - 1; i >= 0; i--){
 
 			// 当新数据与旧数据存在差异时更新元素
 			if(heatmap.___lastData[i] === null || heatmap.___lastData[i][0] !== data[i][0] || heatmap.___lastData[i][1] !== data[i][1]){
 				if(data[i] === null) continue;
-				time.setDate(time.getDate() + dateAdd);
-				dateAdd = 0;
+				time.setDate(time.getDate() - dayStep);
+				dayStep = 0;
 
 				const day = heatmap.children[i];
 				day.className = `lv-${allocate(data[i][0], hitsMin, hitsMax)}`;
 				day.dataset.title = `${time.getFullYear()}-${`${time.getMonth() + 1}`.padStart(2, '0')}-${`${time.getDate()}`.padStart(2, '0')} - 请求: ${lib.numberFormat(data[i][0])}, 响应: ${lib.trafficFormat(data[i][1])}`;
 			}
 
-			dateAdd ++;
+			dayStep ++;
 		}
 
 		heatmap.___lastData = data;
