@@ -1,6 +1,9 @@
 import express from 'express';
 import { existsSync, mkdirSync, readFile, writeFile, writeFileSync } from 'fs';
+import { readdir } from 'fs/promises';
 import path from 'path';
+
+const dataPath = path.resolve('./aplPanel/data');
 
 const deviceList = {
 	'[Unknown]': true,	// 无 UA 设备
@@ -41,8 +44,8 @@ const deviceList = {
 };
 
 const statsDataTemp = {
-	bytes: 0,
 	hits: 0,
+	bytes: 0,
 	device: {},
 };
 for(const deviceName in deviceList){
@@ -58,11 +61,11 @@ let statsData;
 /**
  * 添加到代码之前 cluster.js, `app.get('/download/:hash(\\w+)', async (req, res, next) => {`
  *   - `aplPanelServe(app);`
- * @param {import('express').Application} app
+ * @param {import('express').Application} _app
  */
-export const aplPanelServe = (app) => {
+export const aplPanelServe = (_app) => {
 
-	app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
+	_app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
 		setHeaders: (res, urlPath) => {
 			// 指示浏览器缓存静态文件
 			if(urlPath.endsWith('.html')){
@@ -73,7 +76,15 @@ export const aplPanelServe = (app) => {
 		}
 	}));
 
-	app.get('/dashboard/api/stats', async (req, res, next) => {
+	// 将涉及磁盘操作的数据缓存几秒
+	let nodeListCache = null;
+
+	_app.get('/dashboard/api/stats', async (req, res, next) => {
+		// 检查其他节点的统计数据
+		// if(nodeListCache === null){
+		// 	nodeListCache = {};
+		// 	const files = await readdir(dataPath);
+		// }
 		// 提供 statsData
 		res.json({
 			statsData: statsData,
@@ -177,7 +188,6 @@ export const aplPanelListener = async (req, bytes, hits) => {
 
 
 	// 创建数据目录
-	const dataPath = path.resolve('./aplPanel/data');
 	if(!existsSync(dataPath)){
 		mkdirSync(dataPath);
 	}
