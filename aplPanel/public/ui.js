@@ -23,8 +23,20 @@ const lib = {
 };
 
 const loadLineChart = (el, data = {}, _data = {}) => {
-	const chart_stats_rv_day = echarts.init(el);
-	chart_stats_rv_day.setOption(Object.assign({
+
+	let throttle = false;
+	const ro = new ResizeObserver((entries) => {
+		if(throttle) return;
+		throttle = true;
+		setTimeout(() => {
+			throttle = false;
+			thisChart?.resize();
+		}, 200);
+	});
+	ro.observe(el);
+
+	const thisChart = echarts.init(el);
+	thisChart.setOption(Object.assign({
 		grid: {
 			top: 30,
 			left: 55,
@@ -77,8 +89,20 @@ const loadLineChart = (el, data = {}, _data = {}) => {
 };
 
 const loadPieChart = (el, data = {}, _data = {}) => {
-	const chart_stats_rv_day = echarts.init(el);
-	chart_stats_rv_day.setOption(Object.assign({
+
+	let throttle = false;
+	const ro = new ResizeObserver((entries) => {
+		if(throttle) return;
+		throttle = true;
+		setTimeout(() => {
+			throttle = false;
+			thisChart?.resize();
+		}, 200);
+	});
+	ro.observe(el);
+
+	const thisChart = echarts.init(el);
+	thisChart.setOption(Object.assign({
 		series: [
 			{
 				name: 'Nightingale Chart',
@@ -100,8 +124,20 @@ const loadPieChart = (el, data = {}, _data = {}) => {
 };
 
 const loadBarChart = (el, data = {}, _data = {}) => {
-	const chart_stats_rv_day = echarts.init(el);
-	chart_stats_rv_day.setOption(Object.assign({
+
+	let throttle = false;
+	const ro = new ResizeObserver((entries) => {
+		if(throttle) return;
+		throttle = true;
+		setTimeout(() => {
+			throttle = false;
+			thisChart?.resize();
+		}, 200);
+	});
+	ro.observe(el);
+	
+	const thisChart = echarts.init(el);
+	thisChart.setOption(Object.assign({
 		grid: {
 			top: 30,
 			left: 55,
@@ -403,6 +439,7 @@ const loadStatsData = async () => {
 	await new Promise(async (resolve, reject) => {
 
 		// TODO: 等待后端更新 network 数据, 移除这里的预设
+		// 是否应该显示为百分比?
 
 		loadBarChart(document.getElementById('chart_stats_network_type'), {
 			series: [
@@ -410,13 +447,13 @@ const loadStatsData = async () => {
 					type: 'bar',
 					data: [
 						{
-							value: statsData.network?.v4 || 0,
+							value: statsData.network?.v4,
 							itemStyle: {
 								color: '#06B0FF'
 							}
 						},
 						{
-							value: statsData.network?.v6 || 0,
+							value: statsData.network?.v6,
 							itemStyle: {
 								color: '#ff8c00'
 							}
