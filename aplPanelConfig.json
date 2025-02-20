@@ -1,0 +1,14 @@
+{
+	"dataPath": "./aplPanel/data",
+	"nodes": {
+		"CLUSTER_ID_1": {
+			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-1]",
+			"name": "[Node.1]"
+		},
+		"CLUSTER_ID_2": {
+			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-2]",
+			"name": "[Node.2]"
+		},
+		"doc": "设置显示在仪表盘上的信息"
+	}
+}

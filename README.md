@@ -10,13 +10,36 @@ Node-OpenBMCLAPI Dashboard
 ### 面板
 面板地址: http://127.0.0.1:4000/dashboard/
 
+### 多个节点
+面板支持在一个节点上切换显示多个节点的信息.
+在 `./aplPanelConfig.json` 中配置每个节点的 CLUSTER_ID 和显示文本即可.
+
+```json
+{
+	"dataPath": "./aplPanel/data",
+	"nodes": {
+		"CLUSTER_ID_1": {
+			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-1]",
+			"name": "[Node.1]"
+		},
+		"CLUSTER_ID_2": {
+			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-2]",
+			"name": "[Node.2]"
+		},
+		"doc": "设置显示在仪表盘上的信息"
+	}
+}
+```
+
+- `dataPath`: 可以将所有节点的数据路径配置同在一个位置, 填写相对或绝对地址, 默认无需修改.
+- `nodes`: 在面板上显示的其他节点信息
+
 ### 动态地址
 每次注册节点时读取 `./aplPanelAddress.json` 文件中的地址, 若不存在, 则保持默认值 (环境变量).
 此功能主要用于与其他特殊的内网穿透工具及脚本配合工作.
 
 注意: 可能依然需要在全局变量中设定一个公网地址和端口 (它不一定是真实的), 因为本程序没有处理更多的检查.
 
-示例: `./aplPanelAddress.json`:
 ```json
 {
 	"host": "example.com",

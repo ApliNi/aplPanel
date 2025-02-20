@@ -21,6 +21,8 @@ const lib = {
 		return `${value.toFixed(retainDecimals)}${unit[index]}`;
 	},
 
+	thousandSeparator: (value) => value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','),
+
 	createElement: (tagName, data = null, options = {}) => {
 		const el = document.createElement(tagName, options);
 		if(data === null) return el;
@@ -249,16 +251,60 @@ queueMicrotask(() => {
 	}, 1000);
 });
 
+const ui = {
+	webNodeIdx: -1,
+	loadStatsDataTimeout: null,
+};
+
 const loadStatsData = async () => {
+
+	if(ui.loadStatsDataTimeout) clearInterval(ui.loadStatsDataTimeout);
 	
-	const response = await fetch('./api/stats');
+	const response = await fetch(`./api/stats?idx=${encodeURIComponent(ui.webNodeIdx)}`);
 	const data = await response.json();
 
+	// 显示节点列表
+	(() => {
+		if(data.webNodeIdx === -1) return;
+		data.webNodeIdx = Number(data.webNodeIdx); // TODO: 等待后端更新后移除这一句
+
+		const span = lib.createElement('h2', {
+			className: 'title',
+			textContent: data.webNodes[data.webNodeIdx].title,
+		});
+
+		const list = lib.createElement('div', {
+			className: 'nodes',
+		});
+		for(let idx = 0; idx < data.webNodes.length; idx++){
+			const li = lib.createElement('span', {
+				textContent: data.webNodes[idx].name,
+				className: `${idx === data.webNodeIdx ? '--join' : ''}`,
+			})
+			li.addEventListener('click', () => {
+				ui.webNodeIdx = idx;
+				list.querySelector('.--join').classList.remove('--join');
+				li.classList.add('--join');
+				loadStatsData();
+			});
+			list.appendChild(li);
+		}
+
+		const topBar = document.querySelector('.topBar');
+		topBar.innerHTML = '';
+		topBar.appendChild(span);
+		topBar.appendChild(list);
+
+		ui.webNodeIdx = data.webNodeIdx;
+	})();
+
 	statsData = data.statsData;
-	const statsDataTemp = data.statsDataTemp;
 
 	// 由前端合并统计数据后显示, 逻辑与后端一致
 	(() => { // ../main.js // 保存数据到每个图表
+		if(!data.statsDataTemp) return;
+
+		const statsDataTemp = data.statsDataTemp;
 
 		addObjValueNumber(statsDataTemp, statsData._worker.syncData);
 
@@ -280,12 +326,17 @@ const loadStatsData = async () => {
 		addObjValueNumber(statsData.all, statsDataTemp, true);
 	})();
 
-
 	// 统计信息
 	(() => {
 		const statsInfo = document.querySelector('.statsInfo');
-		statsInfo.querySelector('.statsTotal').textContent = lib.numberFormat(statsData.all.hits);
-		statsInfo.querySelector('.statsTotalTraffic').textContent = lib.trafficFormat(statsData.all.bytes);
+
+		const hits = statsInfo.querySelector('.statsTotal');
+		hits.textContent = lib.numberFormat(statsData.all.hits, 2);
+		hits.dataset.title = lib.thousandSeparator(statsData.all.hits);
+
+		const bytes = statsInfo.querySelector('.statsTotalTraffic');
+		bytes.textContent = lib.trafficFormat(statsData.all.bytes, 2);
+		bytes.dataset.title = lib.thousandSeparator(statsData.all.bytes);
 	})();
 
 
@@ -571,13 +622,9 @@ const loadStatsData = async () => {
 		resolve();
 	});
 
-};
-
-queueMicrotask(() => {
-	loadStatsData();
-	setInterval(() => {
+	ui.loadStatsDataTimeout = setTimeout(() => {
 		loadStatsData();
 	}, 7 * 1000);
-});
-
+};
+loadStatsData();
 

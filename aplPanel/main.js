@@ -1,8 +1,38 @@
 import express from 'express';
-import { existsSync, mkdirSync, readFile, readFileSync, writeFile, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from 'fs';
+import { readFile } from 'fs/promises';
 import path from 'path';
 
-const dataPath = path.resolve('./aplPanel/data');
+const Config = {
+	webNodes: [],
+	webNodeIdx: -1,
+	nodeIds: [],
+	dataPath: './aplPanel/data',
+};
+(async () => {
+	const addrFilePath = path.resolve('./aplPanelConfig.json');
+	if(existsSync(addrFilePath)){
+		const cfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
+
+		if(cfg.dataPath){
+			Config.dataPath = cfg.dataPath;
+		}
+
+		if(cfg.nodes){
+			let idx = 0;
+			for(const nodeId in cfg.nodes){
+				const node = cfg.nodes[nodeId];
+				Config.webNodes.push({
+					title: node.title,
+					name: node.name,
+				});
+				Config.nodeIds.push(nodeId);
+				if(nodeId === process.env.CLUSTER_ID) Config.webNodeIdx = idx;
+				idx++;
+			}
+		}
+	}
+})();
 
 const deviceList = {
 	'[Unknown]': true,	// 无 UA 设备
@@ -60,99 +90,7 @@ for(const deviceName in deviceList){
 
 let statsData;
 
-// 添加导入 `import { aplPanelListener, aplPanelServe } from '../aplPanel/main.js';`
-
-/**
- * 添加到代码之后 cluster.js, `const { bytes, hits } = await this.storage.express(hashPath, req, res, next);`
- *   - `aplPanelListener(req, bytes, hits);`
- * @param {import('express').Request} req
- * @param {number} bytes - 这个文件的大小
- * @param {number} hits - 命中次数 / 是否命中
- */
-export const aplPanelListener = async (req, bytes, hits) => {
-	try{
-		statsDataTemp.hits += hits;
-		statsDataTemp.bytes += bytes;
-
-		const userAgent = req.headers['user-agent'] || '[Unknown]';
-		const deviceType = userAgent.slice(0, userAgent.indexOf('/'));
-		if(deviceList[deviceType]){
-			statsDataTemp.device[deviceType] ++;
-		}else{
-			statsDataTemp.device['[Other]'] ++;
-		}
-
-		const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip;
-		if(!ip){
-			statsDataTemp.network.none ++;
-		}else if(`${ip}`.startsWith('::ffff:')){
-			statsDataTemp.network.v4 ++;
-		}else{
-			statsDataTemp.network.v6 ++;
-		}
-		
-	}catch(err){
-		console.warn(`[AplPanel]`, err);
-	}
-};
-
-/**
- * 添加到代码之前 cluster.js, `app.get('/download/:hash(\\w+)', async (req, res, next) => {`
- *   - `aplPanelServe(app);`
- * @param {import('express').Application} _app
- */
-export const aplPanelServe = (_app) => {
-
-	_app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
-		setHeaders: (res, urlPath) => {
-			// 指示浏览器缓存静态文件
-			if(urlPath.endsWith('.html')){
-				res.setHeader('Cache-Control', 'no-cache');
-			}else{
-				res.setHeader('Cache-Control', 'public, max-age=31536000');
-			}
-		}
-	}));
-
-	// 将涉及磁盘操作的数据缓存几秒
-	let nodeListCache = null;
-
-	_app.get('/dashboard/api/stats', async (req, res, next) => {
-		// 检查其他节点的统计数据
-		// if(nodeListCache === null){
-		// 	nodeListCache = {};
-		// 	const files = await readdir(dataPath);
-		// }
-		// 提供 statsData
-		res.json({
-			statsData: statsData,
-			statsDataTemp: statsDataTemp,
-		});
-	});
-};
-
-/**
- * 这用于支持每次请求上线时都使用单独的最新地址信息, 配合其他特殊内网穿透工具使用
- * @param {String} host - 默认域名
- * @param {Number} port - 默认端口
- */
-export const aplPaneReplaceAddr = (host, port) => {
-	const address = { host: host, port: port };
-	try{
-		// 从根目录读取动态地址文件
-		const addrFilePath = path.resolve('./aplPanelAddress.json');
-		if(existsSync(addrFilePath)){
-			const addr = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }) || '{}');
-			address.host = addr[process.env.CLUSTER_ID]?.host ?? addr[process.env.CLUSTER_PORT]?.host ?? addr.host ?? host;
-			address.port = addr[process.env.CLUSTER_ID]?.port ?? addr[process.env.CLUSTER_PORT]?.port ?? addr.port ?? port;
-			console.log(`[AplPanel] 注册节点: ${address.host}:${address.port}`);
-		}
-	}catch(err){
-		console.warn(`[AplPanel] 读取动态地址文件时出错`, err);
-	}
-	return address;
-};
-
+const dataPath = path.resolve(Config.dataPath);
 (async () => {
 
 	/**
@@ -232,29 +170,18 @@ export const aplPaneReplaceAddr = (host, port) => {
 	const statsFilePath = path.join(dataPath, `./stats_${process.env.CLUSTER_ID || 'default'}.json`);
 
 	// 读取统计数据
-	const readStatsFile = async () => new Promise((resolve) => {
-		if(existsSync(statsFilePath)){
-			readFile(statsFilePath, { encoding: 'utf8' }, (err, data) => {
-				if(err){
-					console.warn(`[AplPanel] 读取统计数据时出错`, err);
-					resolve();
-					return;
-				}
-				try{
-					statsData = JSON.parse(data);
-					resolve();
-				}catch(err){
-					console.warn(`[AplPanel] 解析统计数据时出错`, err);
-					resolve();
-				}
-			});
-		}else{
-			resolve();
+	const readStatsFile = async () => {
+		try{
+			const data = await readFile(statsFilePath, { encoding: 'utf8' });
+			statsData = JSON.parse(data);
+		}catch(err){
+			console.warn(`[AplPanel] 读取统计数据时出错`, err);
 		}
-	});
+	};
 	
 	// 初始化统计数据
-	await readStatsFile();
+	if(existsSync(statsFilePath)) await readStatsFile();
+
 	statsData = deepMergeObject({
 		date: 	getNowStatsDataDate(),
 		hours:	Array.from({ length: 25 }, () => ({ hits: 0, bytes: 0 })),
@@ -396,3 +323,129 @@ export const aplPaneReplaceAddr = (host, port) => {
 
 	console.log(`[AplPanel] ${ThreadTime} 已启动`);
 })();
+
+
+
+// 添加导入 `import { aplPanelListener, aplPanelServe } from '../aplPanel/main.js';`
+
+/**
+ * 添加到代码之后 cluster.js, `const { bytes, hits } = await this.storage.express(hashPath, req, res, next);`
+ *   - `aplPanelListener(req, bytes, hits);`
+ * @param {import('express').Request} req
+ * @param {number} bytes - 这个文件的大小
+ * @param {number} hits - 命中次数 / 是否命中
+ */
+export const aplPanelListener = async (req, bytes, hits) => {
+	try{
+		statsDataTemp.hits += hits;
+		statsDataTemp.bytes += bytes;
+
+		const userAgent = req.headers['user-agent'] || '[Unknown]';
+		const deviceType = userAgent.slice(0, userAgent.indexOf('/'));
+		if(deviceList[deviceType]){
+			statsDataTemp.device[deviceType] ++;
+		}else{
+			statsDataTemp.device['[Other]'] ++;
+		}
+
+		const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip;
+		if(!ip){
+			statsDataTemp.network.none ++;
+		}else if(`${ip}`.startsWith('::ffff:')){
+			statsDataTemp.network.v4 ++;
+		}else{
+			statsDataTemp.network.v6 ++;
+		}
+		
+	}catch(err){
+		console.warn(`[AplPanel]`, err);
+	}
+};
+
+/**
+ * 添加到代码之前 cluster.js, `app.get('/download/:hash(\\w+)', async (req, res, next) => {`
+ *   - `aplPanelServe(app);`
+ * @param {import('express').Application} _app
+ */
+export const aplPanelServe = (_app) => {
+
+	_app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
+		setHeaders: (res, urlPath) => {
+			// 指示浏览器缓存静态文件
+			if(urlPath.endsWith('.html')){
+				res.setHeader('Cache-Control', 'no-cache');
+			}else{
+				res.setHeader('Cache-Control', 'public, max-age=31536000');
+			}
+		}
+	}));
+
+	// 将涉及磁盘操作的数据缓存几秒
+	let nodeDataCache = {};
+
+	// 自动清理缓存
+	const clearNodeDataCache = () => {
+		const nextTime = new Date();
+		nextTime.setMinutes(nextTime.getMinutes() + (nextTime.getSeconds() >= 5 ? 1 : 0));
+		nextTime.setSeconds(5);
+		setTimeout(() => {
+			nodeDataCache = {};
+			clearNodeDataCache();
+		}, nextTime.getTime() - Date.now());
+	}
+
+	_app.get('/dashboard/api/stats', async (req, res, next) => {
+
+		// ./api/stats?idx=
+		const inp = {
+			idx: Number(req.query?.idx ?? Config.webNodeIdx),
+		};
+
+		if(inp.idx !== Config.webNodeIdx && Config.nodeIds[inp.idx]){
+			// 提供其他节点的数据
+			try{
+				if(!nodeDataCache[inp.idx]){
+					nodeDataCache[inp.idx] = JSON.parse(await readFile(path.join(dataPath, `./stats_${Config.nodeIds[inp.idx]}.json`), { encoding: 'utf8' }));
+				}
+				res.json({
+					statsData: nodeDataCache[inp.idx],
+					webNodes: Config.webNodes,
+					webNodeIdx: inp.idx,
+				});
+			}catch(err){
+				console.warn(`[AplPanel] 读取其他节点统计数据时出错`, err);
+				res.status(500);
+			}
+		}else{
+			// 提供当前节点的数据
+			res.json({
+				statsData: statsData,
+				statsDataTemp: statsDataTemp,
+				webNodes: Config.webNodes,
+				webNodeIdx: Config.webNodeIdx,
+			});
+		}
+	});
+};
+
+/**
+ * 这用于支持每次请求上线时都使用单独的最新地址信息, 配合其他特殊内网穿透工具使用
+ * @param {String} host - 默认域名
+ * @param {Number} port - 默认端口
+ */
+export const aplPaneReplaceAddr = (host, port) => {
+	const address = { host: host, port: port };
+	try{
+		// 从根目录读取动态地址文件
+		const addrFilePath = path.resolve('./aplPanelAddress.json');
+		if(existsSync(addrFilePath)){
+			const addr = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
+			address.host = addr[process.env.CLUSTER_ID]?.host ?? addr[process.env.CLUSTER_PORT]?.host ?? addr.host ?? host;
+			address.port = addr[process.env.CLUSTER_ID]?.port ?? addr[process.env.CLUSTER_PORT]?.port ?? addr.port ?? port;
+			console.log(`[AplPanel] 注册节点: ${address.host}:${address.port}`);
+		}
+	}catch(err){
+		console.warn(`[AplPanel] 读取动态地址文件时出错`, err);
+	}
+	return address;
+};
