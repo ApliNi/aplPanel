@@ -31,6 +31,10 @@ body {
 			}
 		}
 	}
+
+	&.--loading {
+		opacity: 0.64;
+	}
 }
 
 .statsInfo {

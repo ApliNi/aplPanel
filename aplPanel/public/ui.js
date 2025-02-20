@@ -268,6 +268,9 @@ const loadStatsData = async () => {
 		if(data.webNodeIdx === -1) return;
 		data.webNodeIdx = Number(data.webNodeIdx); // TODO: 等待后端更新后移除这一句
 
+		const topBar = document.querySelector('.topBar');
+		topBar.classList.remove('--loading');
+
 		const span = lib.createElement('h2', {
 			className: 'title',
 			textContent: data.webNodes[data.webNodeIdx].title,
@@ -276,21 +279,26 @@ const loadStatsData = async () => {
 		const list = lib.createElement('div', {
 			className: 'nodes',
 		});
+
 		for(let idx = 0; idx < data.webNodes.length; idx++){
+
 			const li = lib.createElement('span', {
 				textContent: data.webNodes[idx].name,
 				className: `${idx === data.webNodeIdx ? '--join' : ''}`,
 			})
+
 			li.addEventListener('click', () => {
-				ui.webNodeIdx = idx;
+				if(topBar.classList.contains('--loading') || li.classList.contains('--join')) return;
+				topBar.classList.add('--loading');
+
 				list.querySelector('.--join').classList.remove('--join');
 				li.classList.add('--join');
+				ui.webNodeIdx = idx;
 				loadStatsData();
 			});
 			list.appendChild(li);
 		}
 
-		const topBar = document.querySelector('.topBar');
 		topBar.innerHTML = '';
 		topBar.appendChild(span);
 		topBar.appendChild(list);
