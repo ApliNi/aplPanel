@@ -57,7 +57,7 @@ Node-OpenBMCLAPI Dashboard
 ```
 
 ## 更新
-通常, 直接覆盖文件即可.
+通常, 覆盖文件然后重新运行安装即可.
 
 ## 卸载
 1. 运行 `node ./aplPanel/uninstall.js`, 等待显示 `卸载完毕`
