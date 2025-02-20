@@ -13,20 +13,20 @@
 
 		<meta name="theme-color" content="#202124">
 		<link rel="stylesheet" href="./cake/cakeL.css">
-		<link rel="stylesheet" href="./ui.css?v=0.0.7">
+		<link rel="stylesheet" href="./ui.css?v=0.0.8">
 		<script type="text/javascript" src="./echarts.min.js" defer></script>
 		<script type="text/javascript" src="./ui.js?v=0.0.7" defer></script>
 	</head>
 
 	<body>
+		<div class="topBar container">
+			<h2 class="title">OpenBMCLAPI Dashboard</h2>
+			<div class="nodes"></div>
+		</div>
+
 		<div class="container">
 
-			<div class="topBar container">
-				<h2 class="title">OpenBMCLAPI Dashboard</h2>
-				<div class="nodes"></div>
-			</div>
-
-			<div style="padding-top: 84px;"></div>
+			<div style="padding-top: 24px;"></div>
 			
 			<p class="statsInfo">运行时间: <span class="statsRunTime"></span>, 总计请求: <span class="statsTotal"></span>, 总计流量: <span class="statsTotalTraffic"></span></p>
 

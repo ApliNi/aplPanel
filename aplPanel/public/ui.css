@@ -4,13 +4,9 @@ body {
 }
 
 .topBar {
-	position: fixed;
-	top: 0;
-	left: 0;
 	width: 100%;
 	min-height: 64px;
 	background-color: #000;
-	z-index: 100;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -48,6 +44,7 @@ body {
 	
 	span {
 		color: var(--c);
+		font-size: 17px;
 		position: relative;
 	}
 
