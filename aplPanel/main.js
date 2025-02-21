@@ -6,6 +6,7 @@ import path from 'path';
 const Config = {
 	dataPath: './aplPanel/data',
 	enableWebPanel: true,
+	allowRobots: false,
 	webNodeIdx: -1,
 	webNodes: [],
 	nodeIds: [],
@@ -26,6 +27,7 @@ const Config = {
 
 				if(nodeId === process.env.CLUSTER_ID){
 					if(node.enable === false) Config.enableWebPanel = false;
+					if(node.allowRobots === true) Config.allowRobots = true;
 					Config.webNodeIdx = idx;
 				}
 
@@ -385,6 +387,13 @@ export const aplPanelListener = async (req, bytes, hits) => {
 export const aplPanelServe = (_app) => {
 
 	if(!Config.enableWebPanel) return;
+
+	if(Config.allowRobots){
+		_app.get('/robots.txt', (req, res) => {
+			res.type('text/plain');
+			res.send('User-agent: *\nAllow: /dashboard');
+		});
+	}
 
 	_app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
 		setHeaders: (res, urlPath) => {

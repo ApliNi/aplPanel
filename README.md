@@ -23,11 +23,12 @@ Node-OpenBMCLAPI Dashboard
 	"nodes": {
 		"CLUSTER_ID_1": {
 			"enable": true,
+			"allowRobots": true,
 			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-1]",
 			"name": "[Node.1]"
 		},
 		"CLUSTER_ID_2": {
-			"enable": true,
+			"enable": false,
 			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-2]",
 			"name": "[Node.2]"
 		},
@@ -35,9 +36,13 @@ Node-OpenBMCLAPI Dashboard
 	}
 }
 ```
-- `enable`: 允许关闭这个节点的 web 面板, 但保持数据记录继续运行 (这几乎不会节省性能)
+
 - `dataPath`: 可以将所有节点的数据路径配置在同一个位置, 支持绝对位置, 默认无需修改.
 - `nodes`: 在面板上显示的其他节点信息
+	- `enable`: [默认 true] 允许关闭这个节点的 web 面板, 但保持数据记录继续运行 (这几乎不会节省性能)
+	- `allowRobots`: [默认 false] 允许面板被搜索引擎收录
+	- `title`: 面板顶栏左侧标题文字
+	- `name`: 面板顶栏右侧节点名称按钮文字
 
 ### 动态地址
 每次注册节点时读取 `./aplPanelAddress.json` 文件中的地址, 若不存在, 则保持默认值 (环境变量).
