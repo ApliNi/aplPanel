@@ -4,10 +4,11 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 
 const Config = {
-	webNodes: [],
-	webNodeIdx: -1,
-	nodeIds: [],
 	dataPath: './aplPanel/data',
+	enableWebPanel: true,
+	webNodeIdx: -1,
+	webNodes: [],
+	nodeIds: [],
 };
 (async () => {
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
@@ -22,12 +23,17 @@ const Config = {
 			let idx = 0;
 			for(const nodeId in cfg.nodes){
 				const node = cfg.nodes[nodeId];
+
+				if(nodeId === process.env.CLUSTER_ID){
+					if(node.enable === false) Config.enableWebPanel = false;
+					Config.webNodeIdx = idx;
+				}
+
 				Config.webNodes.push({
 					title: node.title,
 					name: node.name,
 				});
 				Config.nodeIds.push(nodeId);
-				if(nodeId === process.env.CLUSTER_ID) Config.webNodeIdx = idx;
 				idx++;
 			}
 		}
@@ -377,6 +383,8 @@ export const aplPanelListener = async (req, bytes, hits) => {
  * @param {import('express').Application} _app
  */
 export const aplPanelServe = (_app) => {
+
+	if(!Config.enableWebPanel) return;
 
 	_app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
 		setHeaders: (res, urlPath) => {

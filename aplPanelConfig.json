@@ -2,10 +2,12 @@
 	"dataPath": "./aplPanel/data",
 	"nodes": {
 		"CLUSTER_ID_1": {
+			"enable": true,
 			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-1]",
 			"name": "[Node.1]"
 		},
 		"CLUSTER_ID_2": {
+			"enable": false,
 			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-2]",
 			"name": "[Node.2]"
 		},

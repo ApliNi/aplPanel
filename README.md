@@ -22,10 +22,12 @@ Node-OpenBMCLAPI Dashboard
 	"dataPath": "./aplPanel/data",
 	"nodes": {
 		"CLUSTER_ID_1": {
+			"enable": true,
 			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-1]",
 			"name": "[Node.1]"
 		},
 		"CLUSTER_ID_2": {
+			"enable": true,
 			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-2]",
 			"name": "[Node.2]"
 		},
@@ -33,7 +35,7 @@ Node-OpenBMCLAPI Dashboard
 	}
 }
 ```
-
+- `enable`: 允许关闭这个节点的 web 面板, 但保持数据记录继续运行 (这几乎不会节省性能)
 - `dataPath`: 可以将所有节点的数据路径配置在同一个位置, 支持绝对位置, 默认无需修改.
 - `nodes`: 在面板上显示的其他节点信息
 
