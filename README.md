@@ -70,3 +70,8 @@ Node-OpenBMCLAPI Dashboard
 ---
 
 项目正在开发中, 当前版本不一定稳定, 欢迎测试以及提出问题 ヾ(•ω•`)o
+
+## 致谢
+- [Apache ECharts](https://echarts.apache.org/) - 开源可视化图表库
+- [Go-OpenBMCLAPI](https://github.com/LiterMC/go-openbmclapi) - Go 语言实现的 OpenBMCLAPI 节点
+- [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) - OpenBMCLAPI 节点
