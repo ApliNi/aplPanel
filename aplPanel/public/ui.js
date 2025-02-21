@@ -378,8 +378,8 @@ const loadStatsData = async () => {
 		statsData.hours.at(-1).bytes += statsDataTemp.bytes;
 		statsData.hours.at(-1).hits += statsDataTemp.hits;
 
-		statsData.days.at(-1).bytes += statsDataTemp.bytes;
-		statsData.days.at(-1).hits += statsDataTemp.hits;
+		// statsData.days.at(-1).bytes += statsDataTemp.bytes;
+		// statsData.days.at(-1).hits += statsDataTemp.hits;
 
 		statsData.months.at(-1).bytes += statsDataTemp.bytes;
 		statsData.months.at(-1).hits += statsDataTemp.hits;
