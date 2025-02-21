@@ -6,9 +6,12 @@ Node-OpenBMCLAPI Dashboard
 ## 安装
 1. [下载面板](https://github.com/ApliNi/aplPanel/releases), 将 `aplPanel` 目录解压到 OpenBMCLAPI 根目录下
 2. 运行 `node ./aplPanel/install.js`, 等待显示 `安装完毕`
+3. 重启 OpenBMCLAPI 节点
 
 ### 面板
 面板地址: http://127.0.0.1:4000/dashboard/
+
+> 以下配置不影响面板运行 (如果遇到问题, 请提交 Issue)
 
 ### 多个节点
 面板支持在一个节点上切换显示多个节点的信息.
@@ -31,7 +34,7 @@ Node-OpenBMCLAPI Dashboard
 }
 ```
 
-- `dataPath`: 可以将所有节点的数据路径配置同在一个位置, 填写相对或绝对地址, 默认无需修改.
+- `dataPath`: 可以将所有节点的数据路径配置在同一个位置, 支持绝对位置, 默认无需修改.
 - `nodes`: 在面板上显示的其他节点信息
 
 ### 动态地址
@@ -61,7 +64,8 @@ Node-OpenBMCLAPI Dashboard
 
 ## 卸载
 1. 运行 `node ./aplPanel/uninstall.js`, 等待显示 `卸载完毕`
-2. 删除 `aplPanel` 目录
+2. 重启 OpenBMCLAPI 节点
+3. 删除 `aplPanel` 目录
 
 ---
 
