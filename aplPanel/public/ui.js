@@ -8,6 +8,7 @@ const lib = {
 			value /= 1000;
 			index++;
 		}
+		if(unit[index] === '') retainDecimals = 0;
 		return `${value.toFixed(retainDecimals)}${unit[index]}`;
 	},
 
@@ -18,6 +19,7 @@ const lib = {
 			value /= 1024;
 			index++;
 		}
+		if(unit[index] === 'B') retainDecimals = 0;
 		return `${value.toFixed(retainDecimals)}${unit[index]}`;
 	},
 
@@ -51,27 +53,45 @@ const loadLineChart = (el, data = {}, _data = {}) => {
 		grid: {
 			top: 30,
 			left: 55,
-			right: 25,
+			right: 55,
 			bottom: 30,
 		},
 		xAxis: {
 			type: 'category',
 			data: [],
 		},
-		yAxis: {
-			type: 'value',
-			axisLabel: {
-				formatter: (value) => lib.numberFormat(value),
-			},
-			splitLine: {
-				show: true,
-				lineStyle: {
-					color: '#7F7F7F80',
-					type: 'solid',
-					width: 1
+		yAxis: [
+			{
+				type: 'value',
+				alignTicks: true,
+				axisLabel: {
+					formatter: (value) => lib.numberFormat(value),
+				},
+				splitLine: {
+					show: true,
+					lineStyle: {
+						color: '#7F7F7F80',
+						type: 'solid',
+						width: 1
+					},
 				},
 			},
-		},
+			{
+				type: 'value',
+				alignTicks: true,
+				axisLabel: {
+					formatter: (value) => lib.trafficFormat(value),
+				},
+				splitLine: {
+					show: false,
+					lineStyle: {
+						color: '#7F7F7F80',
+						type: 'solid',
+						width: 1
+					},
+				},
+			},
+		],
 		series: [
 			{
 				data: [],
@@ -84,17 +104,49 @@ const loadLineChart = (el, data = {}, _data = {}) => {
 		],
 		tooltip: { // 鼠标悬停时显示数据框
 			trigger: 'axis',
-			axisPointer: {
-				type: 'cross', // 显示十字架指示
-				label: {
-					formatter: (data) => {
-						if(typeof data.value === 'number'){
-							return `${lib.numberFormat(data.value, 2)}`;
-						}
-						return data.value;
+			// valueFormatter: (value, a) => {
+			// 	console.log(value, a);
+			// 	return lib.numberFormat(value);
+			// },
+			formatter: (params) => {
+				return `
+					<div style="font-size:14px;color:#666;font-weight:400;line-height:1; min-width: 100px;">${params[0].name}</div>
+					<div style="margin: 10px 0 0;line-height:1;">
+						${params[0].marker}
+						<span style="font-size:14px;color:#666;font-weight:400;margin-left:2px">${params[0].seriesName}</span>
+						<span style="float:right;margin-left:20px;font-size:14px;color:#666;font-weight:900">${lib.numberFormat(params[0].value, 2)}</span>
+					</div>
+					<div style="margin: 10px 0 0;line-height:1;">
+						${params[1].marker}
+						<span style="font-size:14px;color:#666;font-weight:400;margin-left:2px">${params[1].seriesName}</span>
+						<span style="float:right;margin-left:20px;font-size:14px;color:#666;font-weight:900">${lib.trafficFormat(params[1].value, 2)}</span>
+					</div>
+				`;
+			},
+			axisPointer: [
+				{
+					type: 'cross', // 显示十字架指示
+					label: {
+						formatter: (data) => {
+							if(typeof data.value === 'number'){
+								return `${lib.numberFormat(data.value, 2)}`;
+							}
+							return data.value;
+						},
 					},
 				},
-			},
+				{
+					type: 'cross', // 显示十字架指示
+					label: {
+						formatter: (data) => {
+							if(typeof data.value === 'number'){
+								return `${lib.trafficFormat(data.value, 2)}`;
+							}
+							return data.value;
+						},
+					},
+				},
+			]
 		},
 	}, data));
 };
@@ -130,6 +182,15 @@ const loadPieChart = (el, data = {}, _data = {}) => {
 		tooltip: {
 			trigger: 'item',
 			borderWidth: 0,
+			formatter: (params) => {
+				return `
+					<div style="line-height:1;">
+						${params.marker}
+						<span style="font-size:14px;color:#666;font-weight:400;margin-left:2px">${params.name}</span>
+						<span style="float:right;margin-left:20px;font-size:14px;color:#666;font-weight:900">${lib.numberFormat(params.value, 2)}</span>
+					</div>
+				`;
+			},
 		},
 	}, data));
 };
@@ -157,6 +218,15 @@ const loadBarChart = (el, data = {}, _data = {}) => {
 		},
 		tooltip: {
 			trigger: 'axis',
+			formatter: (params) => {
+				return `
+					<div style="line-height:1;">
+						${params[0].marker}
+						<span style="font-size:14px;color:#666;font-weight:400;margin-left:2px">${params[0].name}</span>
+						<span style="float:right;margin-left:20px;font-size:14px;color:#666;font-weight:900">${lib.numberFormat(params[0].value, 2)}</span>
+					</div>
+				`;
+			},
 			axisPointer: {
 				type: 'cross', // 显示十字架指示
 				label: {
@@ -266,7 +336,6 @@ const loadStatsData = async () => {
 	// 显示节点列表
 	(() => {
 		if(data.webNodeIdx === -1) return;
-		data.webNodeIdx = Number(data.webNodeIdx); // TODO: 等待后端更新后移除这一句
 
 		const topBar = document.querySelector('.topBar');
 		topBar.classList.remove('--loading');
@@ -370,6 +439,7 @@ const loadStatsData = async () => {
 			series: [
 				{
 					data: hitsData,
+					yAxisIndex: 0,
 					type: 'line',
 					name: '请求',
 					itemStyle: {
@@ -390,6 +460,16 @@ const loadStatsData = async () => {
 								}
 							]
 						]
+					},
+				},
+				{
+					data: bytesData,
+					yAxisIndex: 1,
+					type: 'line',
+					name: '流量',
+					itemStyle: {
+						color: '#06b0ff',
+						width: 2,
 					},
 				},
 			],
@@ -420,8 +500,19 @@ const loadStatsData = async () => {
 			series: [
 				{
 					data: hitsData,
+					yAxisIndex: 0,
 					type: 'line',
 					name: '请求',
+					itemStyle: {
+						color: '#10b981',
+						width: 2,
+					}
+				},
+				{
+					data: bytesData,
+					yAxisIndex: 1,
+					type: 'line',
+					name: '流量',
 					itemStyle: {
 						color: '#06b0ff',
 						width: 2,
@@ -455,10 +546,21 @@ const loadStatsData = async () => {
 			series: [
 				{
 					data: hitsData,
+					yAxisIndex: 0,
 					type: 'line',
 					name: '请求',
 					itemStyle: {
-						color: '#f88c00',
+						color: '#10b981',
+						width: 2,
+					}
+				},
+				{
+					data: bytesData,
+					yAxisIndex: 1,
+					type: 'line',
+					name: '流量',
+					itemStyle: {
+						color: '#06b0ff',
 						width: 2,
 					}
 				},
@@ -556,7 +658,12 @@ const loadStatsData = async () => {
 
 				const day = heatmap.children[i];
 				day.className = `lv-${allocate(data[i][0], hitsMin, hitsMax)}`;
-				day.dataset.title = `${time.getFullYear()}-${`${time.getMonth() + 1}`.padStart(2, '0')}-${`${time.getDate()}`.padStart(2, '0')} - 请求: ${lib.numberFormat(data[i][0])}, 响应: ${lib.trafficFormat(data[i][1])}`;
+				const textList = [
+					`${time.getFullYear()}-${`${time.getMonth() + 1}`.padStart(2, '0')}-${`${time.getDate()}`.padStart(2, '0')} - `,
+					`请求: ${lib.numberFormat(data[i][0])}, `,
+					`流量: ${lib.trafficFormat(data[i][1])}`
+				];
+				day.dataset.title = textList.join('');
 			}
 
 			dayStep ++;
