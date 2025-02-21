@@ -29,7 +29,9 @@ body {
 	}
 
 	&.--loading {
-		opacity: 0.64;
+		.title, .nodes {
+			opacity: 0.64;
+		}
 	}
 }
 
