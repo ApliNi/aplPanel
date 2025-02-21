@@ -93,6 +93,7 @@ body {
 			overflow-x: auto;
 			display: flex;
 			justify-content: center;
+			height: auto;
 		
 			.floating {
 				position: absolute;

@@ -185,7 +185,7 @@ const dataPath = path.resolve(Config.dataPath);
 	statsData = deepMergeObject({
 		date: 	getNowStatsDataDate(),
 		hours:	Array.from({ length: 25 }, () => ({ hits: 0, bytes: 0 })),
-		days:	Array.from({ length: 31 }, () => ({ hits: 0, bytes: 0 })),
+		// days:	Array.from({ length: 31 }, () => ({ hits: 0, bytes: 0 })),
 		months:	Array.from({ length: 13 }, () => ({ hits: 0, bytes: 0 })),
 		years:	Array.from({ length: 7 }, () => ({ hits: 0, bytes: 0 })),
 		heatmap: Array.from({ length: 365 }, () => ([ 0, 0 ])),
@@ -196,6 +196,14 @@ const dataPath = path.resolve(Config.dataPath);
 			syncData: {},
 		},
 	}, statsData);
+
+	// 数据结构更新
+	(() => {
+		// v0.0.9: 移除 statsData.days, 因为它与 heatmap 重叠
+		if(statsData.days){
+			delete statsData.days;
+		}
+	})();
 
 	// 滚动更新数据列表
 	const scrollingUpdateStatsData = () => {
@@ -214,8 +222,8 @@ const dataPath = path.resolve(Config.dataPath);
 		}
 		const dayDiff = nowDate.day - statsData.date.day;
 		if(dayDiff > 0){
-			statsData.days.splice(0, dayDiff);
-			statsData.days.push(...Array.from({ length: Math.min(dayDiff, 31) }, () => ({ hits: 0, bytes: 0 })));
+			// statsData.days.splice(0, dayDiff);
+			// statsData.days.push(...Array.from({ length: Math.min(dayDiff, 31) }, () => ({ hits: 0, bytes: 0 })));
 			statsData.heatmap.splice(0, dayDiff);
 			statsData.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([ 0, 0 ])));
 			statsData.date.day += yearDiff;
@@ -261,8 +269,8 @@ const dataPath = path.resolve(Config.dataPath);
 			statsData.hours.at(-1).hits += statsDataTemp.hits;
 			statsData.hours.at(-1).bytes += statsDataTemp.bytes;
 	
-			statsData.days.at(-1).hits += statsDataTemp.hits;
-			statsData.days.at(-1).bytes += statsDataTemp.bytes;
+			// statsData.days.at(-1).hits += statsDataTemp.hits;
+			// statsData.days.at(-1).bytes += statsDataTemp.bytes;
 	
 			statsData.months.at(-1).hits += statsDataTemp.hits;
 			statsData.months.at(-1).bytes += statsDataTemp.bytes;

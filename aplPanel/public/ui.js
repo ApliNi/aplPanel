@@ -476,10 +476,10 @@ const loadStatsData = async () => {
 		const hitsData = [];
 		const bytesData = [];
 
-		for(const dayData of statsData.days){
+		for(const li of statsData.heatmap.slice(-31)){
 			xAxisData.unshift(`${time.getMonth() + 1}-${time.getDate()}`);
-			hitsData.push(dayData.hits);
-			bytesData.push(dayData.bytes);
+			hitsData.push(li[0]);
+			bytesData.push(li[1]);
 			time.setDate(time.getDate() - 1);
 		}
 
