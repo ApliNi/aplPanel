@@ -23,12 +23,14 @@ body {
 			padding: 4px 3px;
 
 			&.--join {
+				pointer-events: none;
 				color: var(--c);
 			}
 		}
 	}
 
 	&.--loading {
+		pointer-events: none;
 		.title, .nodes {
 			opacity: 0.64;
 		}

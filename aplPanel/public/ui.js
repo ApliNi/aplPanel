@@ -348,7 +348,6 @@ const loadStatsData = async () => {
 			})
 
 			li.addEventListener('click', () => {
-				if(topBar.classList.contains('--loading') || li.classList.contains('--join')) return;
 				topBar.classList.add('--loading');
 
 				list.querySelector('.--join').classList.remove('--join');
