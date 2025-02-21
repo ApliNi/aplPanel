@@ -13,9 +13,9 @@
 
 		<meta name="theme-color" content="#202124">
 		<link rel="stylesheet" href="./cake/cakeL.css">
-		<link rel="stylesheet" href="./ui.css?v=0.0.8">
+		<link rel="stylesheet" href="./ui.css?v=0.0.9">
 		<script type="text/javascript" src="./echarts.min.js" defer></script>
-		<script type="text/javascript" src="./ui.js?v=0.0.8" defer></script>
+		<script type="text/javascript" src="./ui.js?v=0.0.9" defer></script>
 	</head>
 
 	<body>
@@ -28,7 +28,7 @@
 
 			<div style="padding-top: 24px;"></div>
 			
-			<p class="statsInfo">运行时间: <span class="statsRunTime"></span>, 总计请求: <span class="statsTotal"></span>, 总计流量: <span class="statsTotalTraffic"></span></p>
+			<p class="statsInfo">运行时间: <span class="statsRunTime"></span>. 总计请求: <span class="statsTotal"></span>, 总计流量: <span class="statsTotalTraffic"></span></p>
 
 			<div class="layout">
 				<div class="main">
@@ -39,6 +39,8 @@
 					<div id="chart_stats_rv_day" class="chart"></div>
 					<h3>当年请求</h3>
 					<div id="chart_stats_rv_month" class="chart"></div>
+					<h3>热力图</h3>
+					<div id="chart_stats_rv_heatmap" class="chart"></div>
 				</div>
 				<div class="side">
 					<h3>常见用户代理</h3>
@@ -47,9 +49,6 @@
 					<div id="chart_stats_network_type" class="chart"></div>
 				</div>
 			</div>
-			
-			<h3 style="margin: 20px 0 0 17px;">热力图</h3>
-			<div id="chart_stats_rv_heatmap" class="chart"></div>
 
 			<br /><br /><br />
 

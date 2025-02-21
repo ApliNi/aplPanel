@@ -123,30 +123,21 @@ const loadLineChart = (el, data = {}, _data = {}) => {
 					</div>
 				`;
 			},
-			axisPointer: [
-				{
-					type: 'cross', // 显示十字架指示
-					label: {
-						formatter: (data) => {
-							if(typeof data.value === 'number'){
+			axisPointer: {
+				type: 'cross', // 显示十字架指示
+				label: {
+					formatter: (data) => {
+						if(typeof data.value === 'number'){
+							if(data.axisIndex === 0){
 								return `${lib.numberFormat(data.value, 2)}`;
-							}
-							return data.value;
-						},
-					},
-				},
-				{
-					type: 'cross', // 显示十字架指示
-					label: {
-						formatter: (data) => {
-							if(typeof data.value === 'number'){
+							}else if(data.axisIndex === 1){
 								return `${lib.trafficFormat(data.value, 2)}`;
 							}
-							return data.value;
-						},
+						}
+						return data.value;
 					},
 				},
-			]
+			},
 		},
 	}, data));
 };
