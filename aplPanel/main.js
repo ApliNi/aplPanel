@@ -392,7 +392,8 @@ export const aplPanelServe = (_app) => {
 			nodeDataCache = {};
 			clearNodeDataCache();
 		}, nextTime.getTime() - Date.now());
-	}
+	};
+	clearNodeDataCache();
 
 	_app.get('/dashboard/api/stats', async (req, res, next) => {
 

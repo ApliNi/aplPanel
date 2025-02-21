@@ -408,8 +408,8 @@ const loadStatsData = async () => {
 
 
 	await new Promise(async (resolve, reject) => {
-		// 获取现在的时间, 每次循环减去一小时
-		let time = new Date();
+		// 获取保存时间, 每次循环减去一小时
+		let time = new Date(statsData._worker.saveTime);
 
 		const xAxisData = [];
 		const hitsData = [];
@@ -469,8 +469,8 @@ const loadStatsData = async () => {
 	});
 
 	await new Promise(async (resolve, reject) => {
-		// 获取现在的时间, 每次循环减去一天
-		let time = new Date();
+		// 获取保存时间, 每次循环减去一天
+		let time = new Date(statsData._worker.saveTime);
 
 		const xAxisData = [];
 		const hitsData = [];
@@ -515,8 +515,8 @@ const loadStatsData = async () => {
 	});
 
 	await new Promise(async (resolve, reject) => {
-		// 获取现在的时间, 每次循环减去一个月
-		let time = new Date();
+		// 获取保存时间, 每次循环减去一个月
+		let time = new Date(statsData._worker.saveTime);
 
 		const xAxisData = [];
 		const hitsData = [];
@@ -636,7 +636,7 @@ const loadStatsData = async () => {
 		})();
 
 		// 使用服务器的时间来计算数据
-		const time = new Date(statsData._worker.saveTime || Date.now());
+		const time = new Date(statsData._worker.saveTime);
 		let dayStep = 0;
 		for(let i = data.length - 1; i >= 0; i--){
 
