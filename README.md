@@ -75,3 +75,4 @@ Node-OpenBMCLAPI Dashboard
 - [Apache ECharts](https://echarts.apache.org/) - 开源可视化图表库
 - [Go-OpenBMCLAPI](https://github.com/LiterMC/go-openbmclapi) - Go 语言实现的 OpenBMCLAPI 节点
 - [OpenBMCLAPI](https://github.com/bangbang93/openbmclapi) - OpenBMCLAPI 节点
+- 前端字体: `HarmonyOS_Sans_SC_Medium`, `JetBrainsMono-Regular`, `Ubuntu-Regular`
