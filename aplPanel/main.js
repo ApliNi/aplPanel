@@ -248,6 +248,9 @@ const dataPath = path.resolve(Config.dataPath);
 
 
 	const startStatsDataSave = async () => {
+		
+		// 主要线程等待同步线程写入文件完毕后再运行保存
+		if(ThreadModeMain) await sleep(500);
 
 		await readStatsFile();
 		
@@ -258,8 +261,6 @@ const dataPath = path.resolve(Config.dataPath);
 
 			ThreadModeMain = true;
 			// console.log(`[AplPanel] 保存统计数据`, new Date());
-
-			await sleep(1000);
 
 			// 收集同步线程的数据
 			addObjValueNumber(statsDataTemp, statsData._worker.syncData);
@@ -308,9 +309,9 @@ const dataPath = path.resolve(Config.dataPath);
 		
 		// [可爱的定时器] 计算到下一个每分钟过2秒的时间, 设置定时器
 		const nextTime = new Date();
-		nextTime.setMinutes(nextTime.getMinutes() + (nextTime.getSeconds() >= 2 ? 1 : 0));
-		nextTime.setSeconds(2);
-		setTimeout(() => {
+		nextTime.setMinutes(nextTime.getMinutes() + (nextTime.getSeconds() >= 1 ? 1 : 0));
+		nextTime.setSeconds(1);
+		setTimeout(async () => {
 			startStatsDataSave();
 		}, nextTime.getTime() - Date.now());
 	};
@@ -394,8 +395,8 @@ export const aplPanelServe = (_app) => {
 	// 自动清理缓存
 	const clearNodeDataCache = () => {
 		const nextTime = new Date();
-		nextTime.setMinutes(nextTime.getMinutes() + (nextTime.getSeconds() >= 5 ? 1 : 0));
-		nextTime.setSeconds(5);
+		nextTime.setMinutes(nextTime.getMinutes() + (nextTime.getSeconds() >= 2 ? 1 : 0));
+		nextTime.setSeconds(2);
 		setTimeout(() => {
 			nodeDataCache = {};
 			clearNodeDataCache();
