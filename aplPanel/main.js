@@ -168,6 +168,17 @@ const dataPath = path.resolve(Config.dataPath);
 		}
 	};
 
+	// 重置对象中所有数值为 0
+	const resetStatsDataTemp = (obj) => {
+		for(const key in obj){
+			if(obj[key].constructor === Object){
+				resetStatsDataTemp(obj[key]);
+			}else if(obj[key].constructor === Number){
+				obj[key] = 0;
+			}
+		}
+	};
+
 	const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 
@@ -210,6 +221,13 @@ const dataPath = path.resolve(Config.dataPath);
 		// v0.0.9: 移除 statsData.days, 因为它与 heatmap 重叠
 		if(statsData.days){
 			delete statsData.days;
+		}
+		// v0.0.10: 修复 statsData.all.network 统计数据过大的问题
+		if(statsData.all.network.v4 + statsData.all.network.v6 > statsData.all.hits){
+			// 计算 v4 和 v6 的比率
+			const v4Ratio = statsData.all.network.v4 / (statsData.all.network.v4 + statsData.all.network.v6);
+			statsData.all.network.v4 = Math.floor(statsData.all.hits * v4Ratio);
+			statsData.all.network.v6 = statsData.all.hits - statsData.all.network.v4;
 		}
 	})();
 
@@ -303,11 +321,7 @@ const dataPath = path.resolve(Config.dataPath);
 		}
 		
 		// 清空临时数据
-		statsDataTemp.hits = 0;
-		statsDataTemp.bytes = 0;
-		for(const key in statsDataTemp.device){
-			statsDataTemp.device[key] = 0;
-		}
+		resetStatsDataTemp(statsDataTemp);
 
 		statsData._worker.saveTime = Date.now();
 	
@@ -469,7 +483,7 @@ export const aplPaneReplaceAddr = (host, port) => {
 			const addr = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
 			address.host = addr[process.env.CLUSTER_ID]?.host ?? addr[process.env.CLUSTER_PORT]?.host ?? addr.host ?? host;
 			address.port = addr[process.env.CLUSTER_ID]?.port ?? addr[process.env.CLUSTER_PORT]?.port ?? addr.port ?? port;
-			console.log(`[AplPanel] 注册节点: ${address.host}:${address.port}`);
+			console.log(`[AplPanel] 使用地址: ${address.host}:${address.port}`);
 		}
 	}catch(err){
 		console.warn(`[AplPanel] 读取动态地址文件时出错`, err);
