@@ -3,13 +3,17 @@
 	"nodes": {
 		"CLUSTER_ID_1": {
 			"enable": true,
-			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-1]",
+			"title": "ApliNi's OpenBMCLAPI Dashboard",
 			"name": "[Node.1]"
 		},
 		"CLUSTER_ID_2": {
 			"enable": false,
-			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-2]",
+			"title": "ApliNi's OpenBMCLAPI Dashboard",
 			"name": "[Node.2]"
+		},
+		"_ALL_": {
+			"title": "ApliNi's OpenBMCLAPI Dashboard All",
+			"name": "[ALL]"
 		},
 		"doc": "设置显示在仪表盘上的信息"
 	}

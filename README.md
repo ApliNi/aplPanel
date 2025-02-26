@@ -23,14 +23,17 @@ Node-OpenBMCLAPI Dashboard
 	"nodes": {
 		"CLUSTER_ID_1": {
 			"enable": true,
-			"allowRobots": true,
-			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-1]",
+			"title": "ApliNi's OpenBMCLAPI Dashboard",
 			"name": "[Node.1]"
 		},
 		"CLUSTER_ID_2": {
 			"enable": false,
-			"title": "ApliNi's OpenBMCLAPI Dashboard [Node-2]",
+			"title": "ApliNi's OpenBMCLAPI Dashboard",
 			"name": "[Node.2]"
+		},
+		"_ALL_": {
+			"title": "ApliNi's OpenBMCLAPI Dashboard All",
+			"name": "[ALL]"
 		},
 		"doc": "设置显示在仪表盘上的信息"
 	}
@@ -43,6 +46,7 @@ Node-OpenBMCLAPI Dashboard
 	- `allowRobots`: [默认 false] 允许面板被搜索引擎收录
 	- `title`: [必选] 面板顶栏左侧标题文字
 	- `name`: [必选] 面板顶栏右侧节点名称按钮文字
+	- 使用 `_ALL_` 作为键名则会合并所有节点的统计信息
 
 通过这些配置, 我们可以最小化的暴露面板到公网, 并同时查看其他节点的数据.
 

@@ -650,8 +650,8 @@ const loadStatsData = async () => {
 				day.className = `lv-${allocate(data[i][0], hitsMin, hitsMax)}`;
 				const textList = [
 					`${time.getFullYear()}-${`${time.getMonth() + 1}`.padStart(2, '0')}-${`${time.getDate()}`.padStart(2, '0')} - `,
-					`请求: ${lib.numberFormat(data[i][0])}, `,
-					`流量: ${lib.trafficFormat(data[i][1])}`
+					`请求: ${lib.numberFormat(data[i][0], 2)}, `,
+					`流量: ${lib.trafficFormat(data[i][1], 2)}`
 				];
 				day.dataset.title = textList.join('');
 			}

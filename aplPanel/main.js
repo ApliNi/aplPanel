@@ -2,6 +2,7 @@ import express from 'express';
 import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from 'fs';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject } from './util.js';
 
 const Config = {
 	dataPath: './aplPanel/data',
@@ -42,44 +43,6 @@ const Config = {
 	}
 })();
 
-const deviceList = {
-	'[Unknown]': true,	// 无 UA 设备
-	'[Other]': true,	// 列表之外的设备
-
-	'BakaXL': true,
-	'Bun': true,
-	'Dalvik': true,
-	'FCL': true,
-	'FileDownloader': true,
-	'Gradle': true,
-	'HMCL': true,
-	'HMCL-PE': true,
-	'Java': true,
-	'Java-http-client': true,
-	'LauncherX': true,
-	'MCinaBox': true,
-	'MSLTeam-MSL': true,
-	'MinecraftLaunch': true,
-	'MinecraftLauncher': true,
-	'Mozilla': true,
-	'Natsurainko.FluentLauncher': true,
-	'PCL2': true,
-	'PZH': true,
-	'Pojav': true,
-	'PojavLauncher': true,
-	'Python': true,
-	'Python-urllib': true,
-	'SharpCraftLauncher': true,
-	'VQRL': true,
-	'ZalithLauncher': true,
-	'bmclapi-ctrl': true,
-	'bmclapi-warden': true,
-	'meta-externalagent': true,
-	'openbmclapi-cluster': true,
-	'python-requests': true,
-	'voxelum': true
-};
-
 const statsDataTemp = {
 	hits: 0,
 	bytes: 0,
@@ -100,87 +63,6 @@ let statsData;
 
 const dataPath = path.resolve(Config.dataPath);
 (async () => {
-
-	/**
-	 * 简单的深度合并对象
-	 * @param {Object} target
-	 * @param {Object} source
-	 * @returns Object - 合并后的对象
-	 */
-	const deepMergeObject = (target, source = {}) => {
-		const result = {};
-		for(const key in target){
-			if(target.hasOwnProperty(key)){
-				result[key] = target[key];
-			}
-		}
-		for(const key in source){
-			if(source.hasOwnProperty(key)){
-				if(source[key] !== null && source[key].constructor === Object){
-					result[key] = deepMergeObject(result[key], source[key]);
-				}else{
-					result[key] = source[key];
-				}
-			}
-		}
-		return result;
-	};
-
-	// 获取从 1970-01-01 00:00:00 UTC 到现在的 小时, 天, 月, 年 数量
-	const getNowStatsDataDate = () => {
-		const date = new Date();
-		date.setHours(date.getHours() + 8);
-		const hour = date.getTime() / (60 * 60 * 1000);
-		return {
-			hour: Math.floor(hour),
-			day: Math.floor(hour / 24),
-			month: Math.floor(hour / (30 * 24)),
-			year: Math.floor(hour / (365 * 24)),
-		};
-	};
-
-	/**
-	 * 相加两个对象的数值, 如果没有则创建
-	 * @param {Object} obj1 - 合并到对象
-	 * @param {Object} obj2 - 要合并的数据
-	 * @param {Boolean} ueeObj2 - 遍历 obj2 的数据, 默认只合并 obj1 中存在的数据
-	 */
-	const addObjValueNumber = (obj1, obj2, ueeObj2 = false) => {
-		const reference = ueeObj2 ? obj2 : obj1;
-		for(const key in reference){
-
-			// 仅当遍历 obj1 时检查 obj2 中是否存在. 因为 obj1 可以添加 key
-			if(ueeObj2 === false && obj2[key] === undefined){
-				continue;
-			}
-
-			const constructor = reference[key].constructor;
-			if(constructor === Number){
-				if(obj1[key] === undefined) obj1[key] = 0;
-				obj1[key] += obj2[key];
-				continue;
-			}
-			if(constructor === Object){
-				if(obj1[key] === undefined) obj1[key] = {};
-				addObjValueNumber(obj1[key], obj2[key], ueeObj2);
-				continue;
-			}
-		}
-	};
-
-	// 重置对象中所有数值为 0
-	const resetStatsDataTemp = (obj) => {
-		for(const key in obj){
-			if(obj[key].constructor === Object){
-				resetStatsDataTemp(obj[key]);
-			}else if(obj[key].constructor === Number){
-				obj[key] = 0;
-			}
-		}
-	};
-
-	const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 
 	// 创建数据目录
 	if(!existsSync(dataPath)){
@@ -208,7 +90,7 @@ const dataPath = path.resolve(Config.dataPath);
 		months:	Array.from({ length: 13 }, () => ({ hits: 0, bytes: 0 })),
 		years:	Array.from({ length: 7 }, () => ({ hits: 0, bytes: 0 })),
 		heatmap: Array.from({ length: 365 }, () => ([ 0, 0 ])),
-		all:	deepMergeObject(statsDataTemp),
+		all:	structuredClone(statsDataTemp),
 		_worker: {
 			mainThread: 0,
 			saveTime: 0,
@@ -422,6 +304,7 @@ export const aplPanelServe = (_app) => {
 
 	// 将涉及磁盘操作的数据缓存几秒
 	let nodeDataCache = {};
+	let nodeDataCache_all = null;
 
 	// 自动清理缓存
 	const clearNodeDataCache = () => {
@@ -430,6 +313,7 @@ export const aplPanelServe = (_app) => {
 		nextTime.setSeconds(2);
 		setTimeout(() => {
 			nodeDataCache = {};
+			nodeDataCache_all = null;
 			clearNodeDataCache();
 		}, nextTime.getTime() - Date.now());
 	};
@@ -445,6 +329,43 @@ export const aplPanelServe = (_app) => {
 		if(inp.idx !== Config.webNodeIdx && Config.nodeIds[inp.idx]){
 			// 提供其他节点的数据
 			try{
+
+				// 提供所有节点的数据
+				if(Config.nodeIds[inp.idx] === '_ALL_'){
+					// 读取所有节点的信息
+					for(let idx = 0; idx < Config.nodeIds.length; idx++){
+						if(nodeDataCache[idx]){
+							continue;
+						}
+						if(idx === Config.webNodeIdx){
+							continue;
+						}
+						const nodeId = Config.nodeIds[idx];
+						if(nodeId.length !== 24){
+							continue;
+						}
+						nodeDataCache[idx] = JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
+					}
+					// 合并数据
+					if(nodeDataCache_all === null){
+						nodeDataCache_all = structuredClone(statsData);
+						for(const nodeDataIdx in nodeDataCache){
+							addObjValueNumber(nodeDataCache_all.hours, nodeDataCache[nodeDataIdx].hours);
+							addObjValueNumber(nodeDataCache_all.months, nodeDataCache[nodeDataIdx].months);
+							addObjValueNumber(nodeDataCache_all.years, nodeDataCache[nodeDataIdx].years);
+							addObjValueNumber(nodeDataCache_all.heatmap, nodeDataCache[nodeDataIdx].heatmap);
+							addObjValueNumber(nodeDataCache_all.all, nodeDataCache[nodeDataIdx].all);
+						}
+					}
+					res.json({
+						statsData: nodeDataCache_all,
+						webNodes: Config.webNodes,
+						webNodeIdx: inp.idx,
+					});
+					return;
+				}
+
+				// 提供其他节点的数据
 				if(!nodeDataCache[inp.idx]){
 					nodeDataCache[inp.idx] = JSON.parse(await readFile(path.join(dataPath, `./stats_${Config.nodeIds[inp.idx]}.json`), { encoding: 'utf8' }));
 				}
