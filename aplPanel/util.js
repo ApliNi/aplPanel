@@ -7,7 +7,15 @@
  * @returns Object - 合并后的对象
  */
 export const deepMergeObject = (target, source = {}) => {
-	const result = structuredClone(target);
+
+	const result = {};
+
+	for(const key in target){
+		if(target.hasOwnProperty(key)){
+			result[key] = target[key];
+		}
+	}
+	
 	for(const key in source){
 		if(source.hasOwnProperty(key)){
 			if(source[key] !== null && source[key].constructor === Object){
