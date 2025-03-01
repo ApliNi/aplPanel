@@ -114,38 +114,38 @@ const dataPath = path.resolve(Config.dataPath);
 	})();
 
 	// 滚动更新数据列表
-	const scrollingUpdateStatsData = () => {
+	const scrollingUpdateStatsData = (sd) => {
 		const nowDate = getNowStatsDataDate();
-		const yearDiff = nowDate.year - statsData.date.year;
+		const yearDiff = nowDate.year - sd.date.year;
 		if(yearDiff > 0){
-			statsData.years.splice(0, yearDiff);
-			statsData.years.push(...Array.from({ length: Math.min(yearDiff, 7) }, () => ({ hits: 0, bytes: 0 })));
-			statsData.date.year += yearDiff;
+			sd.years.splice(0, yearDiff);
+			sd.years.push(...Array.from({ length: Math.min(yearDiff, 7) }, () => ({ hits: 0, bytes: 0 })));
+			sd.date.year += yearDiff;
 		}
-		const monthDiff = nowDate.month - statsData.date.month;
+		const monthDiff = nowDate.month - sd.date.month;
 		if(monthDiff > 0){
-			statsData.months.splice(0, monthDiff);
-			statsData.months.push(...Array.from({ length: Math.min(monthDiff, 13) }, () => ({ hits: 0, bytes: 0 })));
-			statsData.date.month += yearDiff;
+			sd.months.splice(0, monthDiff);
+			sd.months.push(...Array.from({ length: Math.min(monthDiff, 13) }, () => ({ hits: 0, bytes: 0 })));
+			sd.date.month += yearDiff;
 		}
-		const dayDiff = nowDate.day - statsData.date.day;
+		const dayDiff = nowDate.day - sd.date.day;
 		if(dayDiff > 0){
 			// statsData.days.splice(0, dayDiff);
 			// statsData.days.push(...Array.from({ length: Math.min(dayDiff, 31) }, () => ({ hits: 0, bytes: 0 })));
-			statsData.heatmap.splice(0, dayDiff);
-			statsData.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([ 0, 0 ])));
-			statsData.date.day += yearDiff;
+			sd.heatmap.splice(0, dayDiff);
+			sd.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([ 0, 0 ])));
+			sd.date.day += yearDiff;
 		}
-		const hourDiff = nowDate.hour - statsData.date.hour;
+		const hourDiff = nowDate.hour - sd.date.hour;
 		if(hourDiff > 0){
-			statsData.hours.splice(0, hourDiff);
-			statsData.hours.push(...Array.from({ length: Math.min(hourDiff, 25) }, () => ({ hits: 0, bytes: 0 })));
-			statsData.date.hour += yearDiff;
+			sd.hours.splice(0, hourDiff);
+			sd.hours.push(...Array.from({ length: Math.min(hourDiff, 25) }, () => ({ hits: 0, bytes: 0 })));
+			sd.date.hour += yearDiff;
 		}
 
-		statsData.date = nowDate;
+		sd.date = nowDate;
 	};
-	scrollingUpdateStatsData();
+	scrollingUpdateStatsData(statsData);
 
 
 	// 线程启动后将自己的时间戳写进 mainThread, 只有当时间戳相等才维护数据, 否则仅将新数据写入 syncData
@@ -162,7 +162,7 @@ const dataPath = path.resolve(Config.dataPath);
 
 		await readStatsFile();
 		
-		scrollingUpdateStatsData();
+		scrollingUpdateStatsData(statsData);
 		
 		// 判断是否还是主线程
 		if(statsData._worker.mainThread === ThreadTime){
@@ -344,7 +344,13 @@ export const aplPanelServe = (_app) => {
 						if(nodeId.length !== 24){
 							continue;
 						}
-						nodeDataCache[idx] = JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
+						try{
+							nodeDataCache[idx] = JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
+							scrollingUpdateStatsData(nodeDataCache[idx]);
+						}catch(err){
+							console.warn(`[AplPanel] 读取其他节点统计数据时出错`, err);
+							continue;
+						}
 					}
 					// 合并数据
 					if(nodeDataCache_all === null){
@@ -368,6 +374,7 @@ export const aplPanelServe = (_app) => {
 				// 提供其他节点的数据
 				if(!nodeDataCache[inp.idx]){
 					nodeDataCache[inp.idx] = JSON.parse(await readFile(path.join(dataPath, `./stats_${Config.nodeIds[inp.idx]}.json`), { encoding: 'utf8' }));
+					scrollingUpdateStatsData(nodeDataCache[idx]);
 				}
 				res.json({
 					statsData: nodeDataCache[inp.idx],
