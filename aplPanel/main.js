@@ -5,6 +5,7 @@ import path from 'path';
 import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject } from './util.js';
 
 const Config = {
+	config: {},
 	dataPath: './aplPanel/data',
 	enableWebPanel: true,
 	allowRobots: false,
@@ -16,6 +17,8 @@ const Config = {
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(existsSync(addrFilePath)){
 		const cfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
+
+		Config.config = cfg;
 
 		if(cfg.dataPath){
 			Config.dataPath = cfg.dataPath;
@@ -329,6 +332,26 @@ export const aplPanelServe = (_app) => {
 			idx: Number(req.query?.idx ?? Config.webNodeIdx),
 		};
 
+		/**
+		 * 获取一个本地或远程节点的数据
+		 * @param {String} nodeId - 节点id
+		 */
+		const getNodeStatsData = async (nodeId) => {
+			try{
+				const url = Config.config.nodes[nodeId]?.url;
+				if(url){
+					const res = await fetch(`${url.replace(/\/$/, '')}/api/stats?idx=-1`);
+					const data = await res.json();
+					return data.statsData;
+				}else{
+					return JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
+				}
+			}catch(err){
+				console.warn(`[AplPanel] 读取其他节点统计数据时出错 [${nodeId}]:`, err);
+				return null;
+			}
+		};
+
 		if(inp.idx !== Config.webNodeIdx && Config.nodeIds[inp.idx]){
 			// 提供其他节点的数据
 			try{
@@ -347,13 +370,12 @@ export const aplPanelServe = (_app) => {
 						if(nodeId.length !== 24){
 							continue;
 						}
-						try{
-							nodeDataCache[idx] = JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
-							scrollingUpdateStatsData(nodeDataCache[idx]);
-						}catch(err){
-							console.warn(`[AplPanel] 读取其他节点统计数据时出错`, err);
+						const sd = await getNodeStatsData(nodeId);
+						if(!sd){
 							continue;
 						}
+						nodeDataCache[idx] = sd;
+						scrollingUpdateStatsData(nodeDataCache[idx]);
 					}
 					// 合并数据
 					if(nodeDataCache_all === null){
@@ -376,7 +398,12 @@ export const aplPanelServe = (_app) => {
 
 				// 提供其他节点的数据
 				if(!nodeDataCache[inp.idx]){
-					nodeDataCache[inp.idx] = JSON.parse(await readFile(path.join(dataPath, `./stats_${Config.nodeIds[inp.idx]}.json`), { encoding: 'utf8' }));
+					const sd = await getNodeStatsData(Config.nodeIds[inp.idx]);
+					if(!sd){
+						res.json(null);
+						return;
+					}
+					nodeDataCache[inp.idx] = sd;
 					scrollingUpdateStatsData(nodeDataCache[idx]);
 				}
 				res.json({
@@ -385,8 +412,8 @@ export const aplPanelServe = (_app) => {
 					webNodeIdx: inp.idx,
 				});
 			}catch(err){
-				console.warn(`[AplPanel] 读取其他节点统计数据时出错`, err);
-				res.status(500);
+				console.warn(`[AplPanel] 处理其他节点统计数据时出错`, err);
+				res.json(null);
 			}
 		}else{
 			// 提供当前节点的数据

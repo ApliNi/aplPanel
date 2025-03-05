@@ -11,6 +11,11 @@
 			"title": "ApliNi's OpenBMCLAPI Dashboard",
 			"name": "[Node.2]"
 		},
+		"CLUSTER_ID_3": {
+			"title": "ApliNi's OpenBMCLAPI Dashboard",
+			"name": "[Node.2]",
+			"url": "https://bmclapi-2-node.ipacel.cc/dashboard/"
+		},
 		"_ALL_": {
 			"title": "ApliNi's OpenBMCLAPI Dashboard All",
 			"name": "[ALL]"

@@ -283,7 +283,67 @@ const addObjValueNumber = (obj1, obj2, ueeObj2 = false) => {
 			addObjValueNumber(obj1[key], obj2[key], ueeObj2);
 			continue;
 		}
+		if(constructor === Array){
+			if(obj1[key] === undefined) obj1[key] = [];
+			for(let i = 0; i < obj2[key].length; i++){
+				if(reference[key][i].constructor === Number){
+					if(obj1[key][i] === undefined){
+						obj1[key][i] = 0;
+					}
+					obj1[key][i] += obj2[key][i];
+				}else{
+					addObjValueNumber(obj1[key], obj2[key], ueeObj2);
+				}
+			}
+		}
 	}
+};
+
+// 获取从 1970-01-01 00:00:00 UTC 到现在的 小时, 天, 月, 年 数量
+const getNowStatsDataDate = () => {
+	const date = new Date();
+	date.setHours(date.getHours() + 8);
+	const hour = date.getTime() / (60 * 60 * 1000);
+	return {
+		hour: Math.floor(hour),
+		day: Math.floor(hour / 24),
+		month: Math.floor(hour / (30 * 24)),
+		year: Math.floor(hour / (365 * 24)),
+	};
+};
+
+/**
+ * 滚动更新数据列表
+ * @param {statsData} sd - statsData
+ */
+const scrollingUpdateStatsData = (sd) => {
+	const nowDate = getNowStatsDataDate();
+	const yearDiff = nowDate.year - sd.date.year;
+	if(yearDiff > 0){
+		sd.years.splice(0, yearDiff);
+		sd.years.push(...Array.from({ length: Math.min(yearDiff, 7) }, () => ({ hits: 0, bytes: 0 })));
+		sd.date.year += yearDiff;
+	}
+	const monthDiff = nowDate.month - sd.date.month;
+	if(monthDiff > 0){
+		sd.months.splice(0, monthDiff);
+		sd.months.push(...Array.from({ length: Math.min(monthDiff, 13) }, () => ({ hits: 0, bytes: 0 })));
+		sd.date.month += yearDiff;
+	}
+	const dayDiff = nowDate.day - sd.date.day;
+	if(dayDiff > 0){
+		sd.heatmap.splice(0, dayDiff);
+		sd.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([ 0, 0 ])));
+		sd.date.day += yearDiff;
+	}
+	const hourDiff = nowDate.hour - sd.date.hour;
+	if(hourDiff > 0){
+		sd.hours.splice(0, hourDiff);
+		sd.hours.push(...Array.from({ length: Math.min(hourDiff, 25) }, () => ({ hits: 0, bytes: 0 })));
+		sd.date.hour += yearDiff;
+	}
+
+	sd.date = nowDate;
 };
 
 let statsData = null;
@@ -321,8 +381,22 @@ const loadStatsData = async () => {
 
 	if(ui.loadStatsDataTimeout) clearInterval(ui.loadStatsDataTimeout);
 	
-	const response = await fetch(`./api/stats?idx=${encodeURIComponent(ui.webNodeIdx)}`);
-	const data = await response.json();
+	let data = null;
+	try{
+		const response = await fetch(`./api/stats?idx=${encodeURIComponent(ui.webNodeIdx)}`);
+		data = await response.json();
+	}catch(err){
+		console.warn(`[loadStatsData] 获取数据失败 [${ui.webNodeIdx}]:`, err);
+	}
+	
+	ui.loadStatsDataTimeout = setTimeout(() => {
+		loadStatsData();
+	}, 7 * 1000);
+
+	if(!data){
+		console.log(`[loadStatsData] data 为空`);
+		return;
+	}
 
 	// 显示节点列表
 	(() => {
@@ -727,9 +801,6 @@ const loadStatsData = async () => {
 		resolve();
 	});
 
-	ui.loadStatsDataTimeout = setTimeout(() => {
-		loadStatsData();
-	}, 7 * 1000);
 };
 loadStatsData();
 
