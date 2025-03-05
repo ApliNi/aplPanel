@@ -264,7 +264,10 @@ export const aplPanelListener = async (req, bytes, hits) => {
 		const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip;
 		if(!ip){
 			statsDataTemp.network.none ++;
-		}else if(`${ip}`.startsWith('::ffff:')){
+			return;
+		}
+
+		if(`${ip}`.indexOf('.')){
 			statsDataTemp.network.v4 ++;
 		}else{
 			statsDataTemp.network.v6 ++;
