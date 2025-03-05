@@ -33,7 +33,7 @@ Node-OpenBMCLAPI Dashboard
 		},
 		"CLUSTER_ID_3": {
 			"title": "ApliNi's OpenBMCLAPI Dashboard",
-			"name": "[Node.2]",
+			"name": "[Node.3]",
 			"url": "https://bmclapi-2-node.ipacel.cc/dashboard/"
 		},
 		"_ALL_": {
