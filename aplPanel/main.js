@@ -64,6 +64,39 @@ for(const deviceName in deviceList){
 
 let statsData;
 
+// 滚动更新数据列表
+const scrollingUpdateStatsData = (sd) => {
+	const nowDate = getNowStatsDataDate();
+	const yearDiff = nowDate.year - sd.date.year;
+	if(yearDiff > 0){
+		sd.years.splice(0, yearDiff);
+		sd.years.push(...Array.from({ length: Math.min(yearDiff, 7) }, () => ({ hits: 0, bytes: 0 })));
+		sd.date.year += yearDiff;
+	}
+	const monthDiff = nowDate.month - sd.date.month;
+	if(monthDiff > 0){
+		sd.months.splice(0, monthDiff);
+		sd.months.push(...Array.from({ length: Math.min(monthDiff, 13) }, () => ({ hits: 0, bytes: 0 })));
+		sd.date.month += yearDiff;
+	}
+	const dayDiff = nowDate.day - sd.date.day;
+	if(dayDiff > 0){
+		// statsData.days.splice(0, dayDiff);
+		// statsData.days.push(...Array.from({ length: Math.min(dayDiff, 31) }, () => ({ hits: 0, bytes: 0 })));
+		sd.heatmap.splice(0, dayDiff);
+		sd.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([ 0, 0 ])));
+		sd.date.day += yearDiff;
+	}
+	const hourDiff = nowDate.hour - sd.date.hour;
+	if(hourDiff > 0){
+		sd.hours.splice(0, hourDiff);
+		sd.hours.push(...Array.from({ length: Math.min(hourDiff, 25) }, () => ({ hits: 0, bytes: 0 })));
+		sd.date.hour += yearDiff;
+	}
+
+	sd.date = nowDate;
+};
+
 const dataPath = path.resolve(Config.dataPath);
 (async () => {
 
@@ -116,40 +149,7 @@ const dataPath = path.resolve(Config.dataPath);
 		}
 	})();
 
-	// 滚动更新数据列表
-	const scrollingUpdateStatsData = (sd) => {
-		const nowDate = getNowStatsDataDate();
-		const yearDiff = nowDate.year - sd.date.year;
-		if(yearDiff > 0){
-			sd.years.splice(0, yearDiff);
-			sd.years.push(...Array.from({ length: Math.min(yearDiff, 7) }, () => ({ hits: 0, bytes: 0 })));
-			sd.date.year += yearDiff;
-		}
-		const monthDiff = nowDate.month - sd.date.month;
-		if(monthDiff > 0){
-			sd.months.splice(0, monthDiff);
-			sd.months.push(...Array.from({ length: Math.min(monthDiff, 13) }, () => ({ hits: 0, bytes: 0 })));
-			sd.date.month += yearDiff;
-		}
-		const dayDiff = nowDate.day - sd.date.day;
-		if(dayDiff > 0){
-			// statsData.days.splice(0, dayDiff);
-			// statsData.days.push(...Array.from({ length: Math.min(dayDiff, 31) }, () => ({ hits: 0, bytes: 0 })));
-			sd.heatmap.splice(0, dayDiff);
-			sd.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([ 0, 0 ])));
-			sd.date.day += yearDiff;
-		}
-		const hourDiff = nowDate.hour - sd.date.hour;
-		if(hourDiff > 0){
-			sd.hours.splice(0, hourDiff);
-			sd.hours.push(...Array.from({ length: Math.min(hourDiff, 25) }, () => ({ hits: 0, bytes: 0 })));
-			sd.date.hour += yearDiff;
-		}
-
-		sd.date = nowDate;
-	};
 	scrollingUpdateStatsData(statsData);
-
 
 	// 线程启动后将自己的时间戳写进 mainThread, 只有当时间戳相等才维护数据, 否则仅将新数据写入 syncData
 	let ThreadModeMain = true;
@@ -404,7 +404,7 @@ export const aplPanelServe = (_app) => {
 						return;
 					}
 					nodeDataCache[inp.idx] = sd;
-					scrollingUpdateStatsData(nodeDataCache[idx]);
+					scrollingUpdateStatsData(nodeDataCache[inp.idx]);
 				}
 				res.json({
 					statsData: nodeDataCache[inp.idx],
