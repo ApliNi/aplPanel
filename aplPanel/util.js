@@ -94,6 +94,22 @@ export const resetStatsDataTemp = (obj) => {
 	}
 };
 
+// 在指定存储中生成测速文件
+export const generateSpeedTestFile = async (_storage, size) => {
+	const exist = await _storage.exists(`/__measure/${size}`);
+	if(!exist){
+		console.log(`[AplPanel] 创建测速文件 ./__measure/${size}`);
+		const buffer = Buffer.alloc(size * 1024 * 1024, '0066ccff', 'hex');
+
+		await _storage.writeFile(`/__measure/${size}`, buffer, {
+			path: `/__measure/${size}`,
+			hash: `__measure${size}`,
+			size: buffer.length,
+			mtime: Date.now(),
+		});
+	}
+};
+
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const deviceList = {

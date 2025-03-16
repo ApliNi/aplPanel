@@ -7,10 +7,12 @@ const cluster_js_path = path.resolve('./dist/cluster.js');
 
 let cluster_js_content = readFileSync(cluster_js_path, { encoding: 'utf8' });
 
+// /* aplPanel Start */ ___ // /* aplPanel End */___
+
 const installData = [
 	{
 		find: /^/,
-		to: `/* aplPanel Start */import { aplPanelListener, aplPanelServe, aplPaneReplaceAddr } from '../aplPanel/main.js';/* aplPanel End */`,
+		to: `/* aplPanel Start */import { aplPanelListener, aplPanelServe, aplPaneReplaceAddr, aplPaneInvokeGCFiles, aplPaneSyncFileFinish } from '../aplPanel/main.js';/* aplPanel End */`,
 	}, {
 		find: String.raw`app.get('/download/:hash(\\w+)', async (req, res, next) => {`,
 		to: String.raw`/* aplPanel Start */aplPanelServe(app, this.storage);/* aplPanel End */app.get('/download/:hash(\\w+)', async (req, res, next) => {`,
@@ -20,6 +22,12 @@ const installData = [
 	}, {
 		find: `port: this.publicPort,`,
 		to: `port: this.publicPort,/* aplPanel Start */...aplPaneReplaceAddr(this.host, this.publicPort),/* aplPanel End */`,
+	}, {
+		find: `.gc(files.files)`,
+		to: `/* aplPanel Start */.gc(aplPaneInvokeGCFiles(files.files)) // /* aplPanel End */.gc(files.files)`,
+	}, {
+		find: `logger.info('同步完成');`,
+		to: `logger.info('同步完成');/* aplPanel Start */ await aplPaneSyncFileFinish(this.storage); /* aplPanel End */`,
 	}
 ];
 

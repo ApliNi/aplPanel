@@ -2,7 +2,7 @@ import express from 'express';
 import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from 'fs';
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject } from './util.js';
+import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject, generateSpeedTestFile } from './util.js';
 import { createHash } from 'crypto';
 
 const Config = {
@@ -421,7 +421,7 @@ export const aplPanelServe = (_app, _storage) => {
 		});
 	}
 
-	if(Config.config.proxyMeasureRouteFactory){
+	if(Config.config?.proxyMeasureRouteFactory){
 		console.log(`[AplPanel] 启用测速代理`);
 		
 		// ./dist/util.js
@@ -438,27 +438,17 @@ export const aplPanelServe = (_app, _storage) => {
 			return sign === s && Date.now() < parseInt(e, 36);
 		};
 
-		const clusterSecret = process.env.CLUSTER_SECRET;
-
 		_app.get('/measure/:size(\\d+)', async (req, res) => {
 
-			const isSignValid = checkSign(req.baseUrl + req.path, clusterSecret, req.query);
+			const isSignValid = checkSign(req.baseUrl + req.path, process.env.CLUSTER_SECRET, req.query);
 			if(!isSignValid) return res.sendStatus(403);
 
 			const size = parseInt(req.params.size, 10);
 			if(isNaN(size) || size > 200) return res.sendStatus(400);
 
-			const exist = await _storage.exists(`/__measure/${size}`);
-			if(!exist){
-				console.log(`[AplPanel] 创建测速文件 ./__measure/${size}`);
-				const buffer = Buffer.alloc(size * 1024 * 1024, '0066ccff', 'hex');
-
-				await _storage.writeFile(`/__measure/${size}`, buffer, {
-					path: `/__measure/${size}`,
-					hash: `__measure${size}`,
-					size: buffer.length,
-					mtime: Date.now(),
-				});
+			// 如果预建测速文件, 则不检查文件存在
+			if(!Config.config?.persistenceSpeedTestFiles?.includes(size)){
+				await generateSpeedTestFile(_storage, size);
 			}
 
 			console.log(`[AplPanel] 提供测速文件 ./__measure/${size}`);
@@ -489,4 +479,57 @@ export const aplPaneReplaceAddr = (host, port) => {
 		console.warn(`[AplPanel] 读取动态地址文件时出错`, err);
 	}
 	return address;
+};
+
+/**
+ * 在存储初始化完毕后运行
+ * @param {Object} _storage
+ */
+export const aplPaneSyncFileFinish = async (_storage) => {
+	// 预建测速文件
+	if(Config.config?.proxyMeasureRouteFactory){
+		console.log(`[AplPanel] 预建测速文件: [ ${Config.config?.persistenceSpeedTestFiles?.join(', ')} ]`);
+		for(const size of Config.config?.persistenceSpeedTestFiles ?? []){
+			await generateSpeedTestFile(_storage, size);
+		}
+	}
+};
+
+/**
+ * 替换回收文件时使用的文件列表
+ * @param {Array} files - 文件列表
+ * @returns {Array} 新文件列表
+ */
+export const aplPaneInvokeGCFiles = (files) => {
+
+	// delete expire file: /10001/OpenBmclApi/download/__measure/10
+
+	// for(let i = 0; i < 5; i++){
+	// 	console.log(files[i * 100]);
+	// }
+	// console.log(files.constructor);
+	
+	// FileListEntry {
+	// 	path: '/assets/00/00b01a352c44745155298012863caf5810054a6b',
+	// 	hash: '6d34466ba3cfa2c233d86fcda058ce4c',
+	// 	size: 303260,
+	// 	mtime: 1565085508000
+	// }
+	// [Function: Array]
+
+	const addFiles = [];
+
+	// 排除测速文件
+	if(Config.config?.proxyMeasureRouteFactory){
+		for(const size of Config.config?.persistenceSpeedTestFiles ?? []){
+			addFiles.push({
+				path: '',
+				hash: `${size}`,
+				size: size * 1024 * 1024,
+				mtime: 0,
+			});
+		}
+	}
+
+	return [...files, ...addFiles];
 };

@@ -1,6 +1,7 @@
 {
 	"dataPath": "./aplPanel/data",
 	"proxyMeasureRouteFactory": false,
+	"persistenceSpeedTestFiles": [ 10, 20 ],
 	"nodes": {
 		"CLUSTER_ID_1": {
 			"enable": true,
