@@ -13,7 +13,7 @@ const installData = [
 		to: `/* aplPanel Start */import { aplPanelListener, aplPanelServe, aplPaneReplaceAddr } from '../aplPanel/main.js';/* aplPanel End */`,
 	}, {
 		find: String.raw`app.get('/download/:hash(\\w+)', async (req, res, next) => {`,
-		to: String.raw`/* aplPanel Start */aplPanelServe(app);/* aplPanel End */app.get('/download/:hash(\\w+)', async (req, res, next) => {`,
+		to: String.raw`/* aplPanel Start */aplPanelServe(app, this.storage);/* aplPanel End */app.get('/download/:hash(\\w+)', async (req, res, next) => {`,
 	}, {
 		find: `const { bytes, hits } = await this.storage.express(hashPath, req, res, next);`,
 		to: `const { bytes, hits } = await this.storage.express(hashPath, req, res, next);/* aplPanel Start */aplPanelListener(req, bytes, hits);/* aplPanel End */`,

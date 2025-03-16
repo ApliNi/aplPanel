@@ -1,5 +1,6 @@
 {
 	"dataPath": "./aplPanel/data",
+	"proxyMeasureRouteFactory": false,
 	"nodes": {
 		"CLUSTER_ID_1": {
 			"enable": true,

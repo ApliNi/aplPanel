@@ -3,10 +3,10 @@ import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from 'f
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject } from './util.js';
+import { createHash } from 'crypto';
 
 const Config = {
 	config: {},
-	dataPath: './aplPanel/data',
 	enableWebPanel: true,
 	allowRobots: false,
 	webNodeIdx: -1,
@@ -19,10 +19,6 @@ const Config = {
 		const cfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
 
 		Config.config = cfg;
-
-		if(cfg.dataPath){
-			Config.dataPath = cfg.dataPath;
-		}
 
 		if(cfg.nodes){
 			let idx = 0;
@@ -44,6 +40,8 @@ const Config = {
 			}
 		}
 	}
+
+	Config.config.dataPath ??= './aplPanel/data';
 })();
 
 const statsDataTemp = {
@@ -81,8 +79,6 @@ const scrollingUpdateStatsData = (sd) => {
 	}
 	const dayDiff = nowDate.day - sd.date.day;
 	if(dayDiff > 0){
-		// statsData.days.splice(0, dayDiff);
-		// statsData.days.push(...Array.from({ length: Math.min(dayDiff, 31) }, () => ({ hits: 0, bytes: 0 })));
 		sd.heatmap.splice(0, dayDiff);
 		sd.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([ 0, 0 ])));
 		sd.date.day += yearDiff;
@@ -97,7 +93,7 @@ const scrollingUpdateStatsData = (sd) => {
 	sd.date = nowDate;
 };
 
-const dataPath = path.resolve(Config.dataPath);
+const dataPath = path.resolve(Config.config.dataPath);
 (async () => {
 
 	// 创建数据目录
@@ -122,7 +118,6 @@ const dataPath = path.resolve(Config.dataPath);
 	statsData = deepMergeObject({
 		date: 	getNowStatsDataDate(),
 		hours:	Array.from({ length: 25 }, () => ({ hits: 0, bytes: 0 })),
-		// days:	Array.from({ length: 31 }, () => ({ hits: 0, bytes: 0 })),
 		months:	Array.from({ length: 13 }, () => ({ hits: 0, bytes: 0 })),
 		years:	Array.from({ length: 7 }, () => ({ hits: 0, bytes: 0 })),
 		heatmap: Array.from({ length: 365 }, () => ([ 0, 0 ])),
@@ -180,9 +175,6 @@ const dataPath = path.resolve(Config.dataPath);
 			// 保存数据到每个图表
 			statsData.hours.at(-1).hits += statsDataTemp.hits;
 			statsData.hours.at(-1).bytes += statsDataTemp.bytes;
-	
-			// statsData.days.at(-1).hits += statsDataTemp.hits;
-			// statsData.days.at(-1).bytes += statsDataTemp.bytes;
 	
 			statsData.months.at(-1).hits += statsDataTemp.hits;
 			statsData.months.at(-1).bytes += statsDataTemp.bytes;
@@ -285,146 +277,196 @@ export const aplPanelListener = async (req, bytes, hits) => {
  * 添加到代码之前 cluster.js, `app.get('/download/:hash(\\w+)', async (req, res, next) => {`
  *   - `aplPanelServe(app);`
  * @param {import('express').Application} _app
+ * @param {Object} _storage
  */
-export const aplPanelServe = (_app) => {
+export const aplPanelServe = (_app, _storage) => {
+	console.log(`[AplPanel] aplPanelServe`);
 
-	if(!Config.enableWebPanel) return;
-
-	if(Config.allowRobots){
-		_app.get('/robots.txt', (req, res) => {
-			res.type('text/plain');
-			res.send('User-agent: *\nAllow: /dashboard');
-		});
-	}
-
-	_app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
-		setHeaders: (res, urlPath) => {
-			// 指示浏览器缓存静态文件
-			if(urlPath.endsWith('.html')){
-				res.setHeader('Cache-Control', 'no-cache');
-			}else{
-				res.setHeader('Cache-Control', 'public, max-age=31536000');
-			}
+	if(Config.enableWebPanel){
+		console.log(`[AplPanel] 启用面板服务`);
+		if(Config.allowRobots){
+			_app.get('/robots.txt', (req, res) => {
+				res.type('text/plain');
+				res.send('User-agent: *\nAllow: /dashboard');
+			});
 		}
-	}));
-
-	// 将涉及磁盘操作的数据缓存几秒
-	let nodeDataCache = {};
-	let nodeDataCache_all = null;
-
-	// 自动清理缓存
-	const clearNodeDataCache = () => {
-		const nextTime = new Date();
-		nextTime.setMinutes(nextTime.getMinutes() + (nextTime.getSeconds() >= 2 ? 1 : 0));
-		nextTime.setSeconds(2);
-		setTimeout(() => {
-			nodeDataCache = {};
-			nodeDataCache_all = null;
-			clearNodeDataCache();
-		}, nextTime.getTime() - Date.now());
-	};
-	clearNodeDataCache();
-
-	_app.get('/dashboard/api/stats', async (req, res, next) => {
-
-		// ./api/stats?idx=
-		const inp = {
-			idx: Number(req.query?.idx ?? Config.webNodeIdx),
-		};
-
-		/**
-		 * 获取一个本地或远程节点的数据
-		 * @param {String} nodeId - 节点id
-		 */
-		const getNodeStatsData = async (nodeId) => {
-			try{
-				const url = Config.config.nodes[nodeId]?.url;
-				if(url){
-					const res = await fetch(`${url.replace(/\/$/, '')}/api/stats?idx=-1`);
-					const data = await res.json();
-					return data.statsData;
+	
+		_app.use('/dashboard', express.static(path.resolve('./aplPanel/public'), {
+			setHeaders: (res, urlPath) => {
+				// 指示浏览器缓存静态文件
+				if(urlPath.endsWith('.html')){
+					res.setHeader('Cache-Control', 'no-cache');
 				}else{
-					return JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
+					res.setHeader('Cache-Control', 'public, max-age=31536000');
 				}
-			}catch(err){
-				console.warn(`[AplPanel] 读取其他节点统计数据时出错 [${nodeId}]:`, err);
-				return null;
 			}
+		}));
+	
+		// 将涉及磁盘操作的数据缓存几秒
+		let nodeDataCache = {};
+		let nodeDataCache_all = null;
+	
+		// 自动清理缓存
+		const clearNodeDataCache = () => {
+			const nextTime = new Date();
+			nextTime.setMinutes(nextTime.getMinutes() + (nextTime.getSeconds() >= 2 ? 1 : 0));
+			nextTime.setSeconds(2);
+			setTimeout(() => {
+				nodeDataCache = {};
+				nodeDataCache_all = null;
+				clearNodeDataCache();
+			}, nextTime.getTime() - Date.now());
 		};
-
-		if(inp.idx !== Config.webNodeIdx && Config.nodeIds[inp.idx]){
-			// 提供其他节点的数据
-			try{
-
-				// 提供所有节点的数据
-				if(Config.nodeIds[inp.idx] === '_ALL_'){
-					// 读取所有节点的信息
-					for(let idx = 0; idx < Config.nodeIds.length; idx++){
-						if(nodeDataCache[idx]){
-							continue;
-						}
-						if(idx === Config.webNodeIdx){
-							continue;
-						}
-						const nodeId = Config.nodeIds[idx];
-						if(nodeId.length !== 24){
-							continue;
-						}
-						const sd = await getNodeStatsData(nodeId);
-						if(!sd){
-							continue;
-						}
-						nodeDataCache[idx] = sd;
-						scrollingUpdateStatsData(nodeDataCache[idx]);
+		clearNodeDataCache();
+	
+		_app.get('/dashboard/api/stats', async (req, res, next) => {
+	
+			// ./api/stats?idx=
+			const inp = {
+				idx: Number(req.query?.idx ?? Config.webNodeIdx),
+			};
+	
+			/**
+			 * 获取一个本地或远程节点的数据
+			 * @param {String} nodeId - 节点id
+			 */
+			const getNodeStatsData = async (nodeId) => {
+				try{
+					const url = Config.config.nodes[nodeId]?.url;
+					if(url){
+						const res = await fetch(`${url.replace(/\/$/, '')}/api/stats?idx=-1`);
+						const data = await res.json();
+						return data.statsData;
+					}else{
+						return JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
 					}
-					// 合并数据
-					if(nodeDataCache_all === null){
-						nodeDataCache_all = structuredClone(statsData);
-						for(const nodeDataIdx in nodeDataCache){
-							addObjValueNumber(nodeDataCache_all.hours, nodeDataCache[nodeDataIdx].hours);
-							addObjValueNumber(nodeDataCache_all.months, nodeDataCache[nodeDataIdx].months);
-							addObjValueNumber(nodeDataCache_all.years, nodeDataCache[nodeDataIdx].years);
-							addObjValueNumber(nodeDataCache_all.heatmap, nodeDataCache[nodeDataIdx].heatmap);
-							addObjValueNumber(nodeDataCache_all.all, nodeDataCache[nodeDataIdx].all);
+				}catch(err){
+					console.warn(`[AplPanel] 读取其他节点统计数据时出错 [${nodeId}]:`, err);
+					return null;
+				}
+			};
+	
+			if(inp.idx !== Config.webNodeIdx && Config.nodeIds[inp.idx]){
+				// 提供其他节点的数据
+				try{
+	
+					// 提供所有节点的数据
+					if(Config.nodeIds[inp.idx] === '_ALL_'){
+						// 读取所有节点的信息
+						for(let idx = 0; idx < Config.nodeIds.length; idx++){
+							if(nodeDataCache[idx]){
+								continue;
+							}
+							if(idx === Config.webNodeIdx){
+								continue;
+							}
+							const nodeId = Config.nodeIds[idx];
+							if(nodeId.length !== 24){
+								continue;
+							}
+							const sd = await getNodeStatsData(nodeId);
+							if(!sd){
+								continue;
+							}
+							nodeDataCache[idx] = sd;
+							scrollingUpdateStatsData(nodeDataCache[idx]);
 						}
+						// 合并数据
+						if(nodeDataCache_all === null){
+							nodeDataCache_all = structuredClone(statsData);
+							for(const nodeDataIdx in nodeDataCache){
+								addObjValueNumber(nodeDataCache_all.hours, nodeDataCache[nodeDataIdx].hours);
+								addObjValueNumber(nodeDataCache_all.months, nodeDataCache[nodeDataIdx].months);
+								addObjValueNumber(nodeDataCache_all.years, nodeDataCache[nodeDataIdx].years);
+								addObjValueNumber(nodeDataCache_all.heatmap, nodeDataCache[nodeDataIdx].heatmap);
+								addObjValueNumber(nodeDataCache_all.all, nodeDataCache[nodeDataIdx].all);
+							}
+						}
+						res.json({
+							statsData: nodeDataCache_all,
+							webNodes: Config.webNodes,
+							webNodeIdx: inp.idx,
+						});
+						return;
+					}
+	
+					// 提供其他节点的数据
+					if(!nodeDataCache[inp.idx]){
+						const sd = await getNodeStatsData(Config.nodeIds[inp.idx]);
+						if(!sd){
+							res.json(null);
+							return;
+						}
+						nodeDataCache[inp.idx] = sd;
+						scrollingUpdateStatsData(nodeDataCache[inp.idx]);
 					}
 					res.json({
-						statsData: nodeDataCache_all,
+						statsData: nodeDataCache[inp.idx],
 						webNodes: Config.webNodes,
 						webNodeIdx: inp.idx,
 					});
-					return;
+				}catch(err){
+					console.warn(`[AplPanel] 处理其他节点统计数据时出错`, err);
+					res.json(null);
 				}
-
-				// 提供其他节点的数据
-				if(!nodeDataCache[inp.idx]){
-					const sd = await getNodeStatsData(Config.nodeIds[inp.idx]);
-					if(!sd){
-						res.json(null);
-						return;
-					}
-					nodeDataCache[inp.idx] = sd;
-					scrollingUpdateStatsData(nodeDataCache[inp.idx]);
-				}
+			}else{
+				// 提供当前节点的数据
 				res.json({
-					statsData: nodeDataCache[inp.idx],
+					statsData: statsData,
+					statsDataTemp: statsDataTemp,
 					webNodes: Config.webNodes,
-					webNodeIdx: inp.idx,
+					webNodeIdx: Config.webNodeIdx,
 				});
-			}catch(err){
-				console.warn(`[AplPanel] 处理其他节点统计数据时出错`, err);
-				res.json(null);
 			}
-		}else{
-			// 提供当前节点的数据
-			res.json({
-				statsData: statsData,
-				statsDataTemp: statsDataTemp,
-				webNodes: Config.webNodes,
-				webNodeIdx: Config.webNodeIdx,
-			});
-		}
-	});
+		});
+	}
+
+	if(Config.config.proxyMeasureRouteFactory){
+		console.log(`[AplPanel] 启用测速代理`);
+		
+		// ./dist/util.js
+		function checkSign(hash, secret, query){
+			const { s, e } = query;
+			if (!s || !e)
+				return false;
+			const sha1 = createHash('sha1');
+			const toSign = [secret, hash, e];
+			for (const str of toSign) {
+				sha1.update(str);
+			}
+			const sign = sha1.digest('base64url');
+			return sign === s && Date.now() < parseInt(e, 36);
+		};
+
+		const clusterSecret = process.env.CLUSTER_SECRET;
+
+		_app.get('/measure/:size(\\d+)', async (req, res) => {
+
+			const isSignValid = checkSign(req.baseUrl + req.path, clusterSecret, req.query);
+			if(!isSignValid) return res.sendStatus(403);
+
+			const size = parseInt(req.params.size, 10);
+			if(isNaN(size) || size > 200) return res.sendStatus(400);
+
+			const exist = await _storage.exists(`/__measure/${size}`);
+			if(!exist){
+				console.log(`[AplPanel] 创建测速文件 ./__measure/${size}`);
+				const buffer = Buffer.alloc(size * 1024 * 1024, '0066ccff', 'hex');
+
+				await _storage.writeFile(`/__measure/${size}`, buffer, {
+					path: `/__measure/${size}`,
+					hash: `__measure${size}`,
+					size: buffer.length,
+					mtime: Date.now(),
+				});
+			}
+
+			console.log(`[AplPanel] 提供测速文件 ./__measure/${size}`);
+
+			await _storage.express(`/__measure/${size}`, req, res);
+			return;
+		});
+	}
 };
 
 /**
