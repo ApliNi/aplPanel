@@ -13,7 +13,7 @@ Node-OpenBMCLAPI Dashboard
 
 > 以下配置不影响面板运行 (如果遇到问题, 请提交 Issue)
 
-### 多个节点
+### 配置文件 & 多个节点
 面板支持在一个节点上切换显示多个节点的信息.
 在 `./aplPanelConfig.json` 中配置每个节点的 CLUSTER_ID 和显示文本即可.
 
