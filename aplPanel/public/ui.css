@@ -182,7 +182,7 @@ body {
 		.heatmap > div {
 			&.lv-0 { background-color: #161b22; }
 			&.lv-1 { background-color: #0e4429; }
-			&.lv-2 { background-color: #26a641; }
+			&.lv-2 { background-color: #006d32; }
 			&.lv-3 { background-color: #26a641; }
 			&.lv-4 { background-color: #39d353; }
 		}
