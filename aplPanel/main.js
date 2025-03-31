@@ -552,13 +552,13 @@ export const aplPaneInvokeGCFiles = (files) => {
 export const dayStartLimiter = async () => {
 
 	const Limit = Config.config?.dayStartLimiter ?? 50;
-	const data = statsData._worker.startLimiter;
+	const worker = statsData._worker.startLimiter ?? 0;
 	const dayNum = new Date().getDate();
 
 	console.log(`[AplPanel] [dayStartLimiter] 启动计数: ${data[1] + 1} / ${Limit}`);
 
-	if(data[0] === dayNum){
-		if(data[1] >= Limit){
+	if(worker.startLimiter[0] === dayNum){
+		if(worker.startLimiter[1] >= Limit){
 			const tomorrow = new Date();
 			tomorrow.setDate(tomorrow.getDate() + 1);
 			tomorrow.setHours(0, 0, 0, 0);
@@ -567,9 +567,9 @@ export const dayStartLimiter = async () => {
 			await sleep(toTomorrow + 2000);
 		}
 	}else{
-		data[0] = dayNum;
-		data[1] = 0;
+		worker.startLimiter[0] = dayNum;
+		worker.startLimiter[1] = 0;
 	}
 
-	data[1] ++;
+	worker.startLimiter[1] ++;
 };
