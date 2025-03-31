@@ -95,13 +95,13 @@ const scrollingUpdateStatsData = (sd) => {
 };
 
 const dataPath = path.resolve(Config.config.dataPath);
+const statsFilePath = path.join(dataPath, `./stats_${process.env.CLUSTER_ID || 'default'}.json`);
 await (async () => {
 
 	// 创建数据目录
 	if(!existsSync(dataPath)){
 		mkdirSync(dataPath);
 	}
-	const statsFilePath = path.join(dataPath, `./stats_${process.env.CLUSTER_ID || 'default'}.json`);
 
 	// 读取统计数据
 	const readStatsFile = async () => {
@@ -127,8 +127,8 @@ await (async () => {
 			mainThread: 0,
 			saveTime: 0,
 			syncData: {},
-			startLimiter: [0, 0],
 		},
+		_startLimiter: [-1, 0],
 	}, statsData);
 
 	// 数据结构更新
@@ -552,24 +552,27 @@ export const aplPaneInvokeGCFiles = (files) => {
 export const dayStartLimiter = async () => {
 
 	const Limit = Config.config?.dayStartLimiter ?? 50;
-	const worker = statsData._worker.startLimiter ?? 0;
 	const dayNum = new Date().getDate();
 
-	console.log(`[AplPanel] [dayStartLimiter] 启动计数: ${data[1] + 1} / ${Limit}`);
+	console.log(`[AplPanel] [dayStartLimiter] 启动计数: ${statsData._startLimiter[1] + 1} / ${Limit}`);
 
-	if(worker.startLimiter[0] === dayNum){
-		if(worker.startLimiter[1] >= Limit){
+	if(statsData._startLimiter[0] === dayNum || statsData._startLimiter[0] === -1){
+		if(statsData._startLimiter[1] >= Limit){
 			const tomorrow = new Date();
 			tomorrow.setDate(tomorrow.getDate() + 1);
 			tomorrow.setHours(0, 0, 0, 0);
 			const toTomorrow = tomorrow - new Date();
-			console.log(`[AplPanel] [dayStartLimiter] 达到启动次数上限, 等待 ${toTomorrow / 1000} 秒后运行...`);
+			console.log(`[AplPanel] [dayStartLimiter] 达到启动次数上限, 等待 ${(toTomorrow / (60 * 60 * 1000)).toFixed(2)} 小时后运行...`);
 			await sleep(toTomorrow + 2000);
 		}
 	}else{
-		worker.startLimiter[0] = dayNum;
-		worker.startLimiter[1] = 0;
+		statsData._startLimiter[1] = 0;
 	}
 
-	worker.startLimiter[1] ++;
+	statsData._startLimiter[0] = dayNum;
+	statsData._startLimiter[1] ++;
+
+	writeFile(statsFilePath, JSON.stringify(statsData), (err) => {
+		if(err) console.log(`[AplPanel] 保存统计数据失败`, err);
+	});
 };
