@@ -12,7 +12,7 @@ let cluster_js_content = readFileSync(cluster_js_path, { encoding: 'utf8' });
 const installData = [
 	{
 		find: /^/,
-		to: `/* aplPanel Start */import { aplPanelListener, aplPanelServe, aplPaneReplaceAddr, aplPaneInvokeGCFiles, aplPaneSyncFileFinish } from '../aplPanel/main.js';/* aplPanel End */`,
+		to: `/* aplPanel Start */import { aplPanelListener, aplPanelServe, aplPaneReplaceAddr, aplPaneInvokeGCFiles, aplPaneSyncFileFinish, dayStartLimiter } from '../aplPanel/main.js';/* aplPanel End */`,
 	}, {
 		find: String.raw`app.get('/download/:hash(\\w+)', async (req, res, next) => {`,
 		to: String.raw`/* aplPanel Start */aplPanelServe(app, this.storage);/* aplPanel End */app.get('/download/:hash(\\w+)', async (req, res, next) => {`,
@@ -28,6 +28,9 @@ const installData = [
 	}, {
 		find: `logger.info('同步完成');`,
 		to: `logger.info('同步完成');/* aplPanel Start */ await aplPaneSyncFileFinish(this.storage); /* aplPanel End */`,
+	}, {
+		find: `await this.storage.init?.();`,
+		to: `/* aplPanel Start */ await dayStartLimiter(); /* aplPanel End */await this.storage.init?.();`,
 	}
 ];
 
