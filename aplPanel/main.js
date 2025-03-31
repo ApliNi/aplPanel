@@ -63,6 +63,17 @@ for(const deviceName in deviceList){
 
 let statsData;
 
+// 从 ipv4 mapped ipv6 地址中拆分 ipv4
+function extractIPv4FromIPv6(ip) {
+	if (ip.startsWith('::ffff:')) {
+	  const ipv4Part = ip.substring(7); // 移除前缀
+	  if (isIPv4(ipv4Part)) {
+		return ipv4Part;
+	  }
+	}
+	return null;
+}
+
 // 滚动更新数据列表
 const scrollingUpdateStatsData = (sd) => {
 	const nowDate = getNowStatsDataDate();
