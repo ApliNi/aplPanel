@@ -22,6 +22,7 @@ Node-OpenBMCLAPI Dashboard
 	"dataPath": "./aplPanel/data",
 	"proxyMeasureRouteFactory": false,
 	"persistenceSpeedTestFiles": [ 10, 20 ],
+	"ip": "",
 	"nodes": {
 		"CLUSTER_ID_1": {
 			"enable": true,
@@ -50,6 +51,7 @@ Node-OpenBMCLAPI Dashboard
 - `dataPath`: 可以将所有节点的数据路径配置在同一个位置, 支持绝对位置, 默认无需修改
 - `proxyMeasureRouteFactory`: 将测速文件保存到存储目录, 并使用存储提供测速文件 (为 WebDav 存储准备)
 - `persistenceSpeedTestFiles`: 预建测速文件列表, 填写文件大小数值 (MB)
+- `ip`: 留空使用默认获取的 ip 地址, 可选择请求头中的 ip 地址 (如填写 `x-forwarded-for` 或 `cf-connecting-ip`)
 - `nodes`: 在面板上显示的其他节点信息
 	- `enable`: [默认 true] 允许关闭这个节点的 web 面板, 但保持数据记录继续运行 (这几乎不会节省性能)
 	- `allowRobots`: [默认 false] 允许面板被搜索引擎收录

@@ -256,7 +256,7 @@ export const aplPanelListener = async (req, bytes, hits) => {
 			statsDataTemp.device['[Other]'] ++;
 		}
 
-		const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip;
+		const ip = Config.config?.ip ? req.headers[Config.config.ip] || req.ip : req.ip;
 		if(!ip){
 			statsDataTemp.network.none ++;
 			return;
