@@ -558,7 +558,7 @@ export const dayStartLimiter = async () => {
 	console.log(`[AplPanel] [dayStartLimiter] 启动计数: ${data[1] + 1} / ${Limit}`);
 
 	if(data[0] === dayNum){
-		if(dayNum[1] >= Limit){
+		if(data[1] >= Limit){
 			const tomorrow = new Date();
 			tomorrow.setDate(tomorrow.getDate() + 1);
 			tomorrow.setHours(0, 0, 0, 0);
