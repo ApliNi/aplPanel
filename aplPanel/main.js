@@ -4,6 +4,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject, generateSpeedTestFile } from './util.js';
 import { createHash } from 'crypto';
+import { isIPv4 } from 'net';
 
 const Config = {
 	config: {},
@@ -262,9 +263,18 @@ export const aplPanelListener = async (req, bytes, hits) => {
 			return;
 		}
 
-		if(`${ip}`.indexOf('.')){
+		// 解析IP
+		let ipToUse = ip;
+		
+		// 拆分IP
+		const extractedIPv4 = extractIPv4FromIPv6(ip);
+		if (extractedIPv4) {
+			ipToUse = extractedIPv4;
+		}		
+
+		if (isIPv4(ipToUse)) {
 			statsDataTemp.network.v4 ++;
-		}else{
+		} else {
 			statsDataTemp.network.v6 ++;
 		}
 		
