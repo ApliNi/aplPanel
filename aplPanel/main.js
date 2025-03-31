@@ -63,17 +63,6 @@ for(const deviceName in deviceList){
 
 let statsData;
 
-// 从 ipv4 mapped ipv6 地址中拆分 ipv4
-function extractIPv4FromIPv6(ip) {
-	if (ip.startsWith('::ffff:')) {
-	  const ipv4Part = ip.substring(7); // 移除前缀
-	  if (isIPv4(ipv4Part)) {
-		return ipv4Part;
-	  }
-	}
-	return null;
-}
-
 // 滚动更新数据列表
 const scrollingUpdateStatsData = (sd) => {
 	const nowDate = getNowStatsDataDate();
@@ -274,18 +263,20 @@ export const aplPanelListener = async (req, bytes, hits) => {
 			return;
 		}
 
-		// 解析IP
-		let ipToUse = ip;
-		
-		// 拆分IP
-		const extractedIPv4 = extractIPv4FromIPv6(ip);
-		if (extractedIPv4) {
-			ipToUse = extractedIPv4;
-		}		
+		// 从 ipv4 mapped ipv6 地址中拆分 ipv4
+		if(ip.startsWith('::ffff:')){
+			// 移除前缀
+			if(isIPv4(ip.substring(7))){
+				statsDataTemp.network.v4 ++;
+			}else{
+				statsDataTemp.network.v6 ++;
+			}
+			return;
+		}
 
-		if (isIPv4(ipToUse)) {
+		if(isIPv4(ip)){
 			statsDataTemp.network.v4 ++;
-		} else {
+		}else{
 			statsDataTemp.network.v6 ++;
 		}
 		
