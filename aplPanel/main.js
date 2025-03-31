@@ -4,6 +4,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject, generateSpeedTestFile } from './util.js';
 import { createHash } from 'crypto';
+import { isIPv4 } from 'net';
 
 const Config = {
 	config: {},
@@ -61,6 +62,17 @@ for(const deviceName in deviceList){
 }
 
 let statsData;
+
+// 从 ipv4 mapped ipv6 地址中拆分 ipv4
+function extractIPv4FromIPv6(ip) {
+	if (ip.startsWith('::ffff:')) {
+	  const ipv4Part = ip.substring(7); // 移除前缀
+	  if (isIPv4(ipv4Part)) {
+		return ipv4Part;
+	  }
+	}
+	return null;
+}
 
 // 滚动更新数据列表
 const scrollingUpdateStatsData = (sd) => {
@@ -262,9 +274,18 @@ export const aplPanelListener = async (req, bytes, hits) => {
 			return;
 		}
 
-		if(`${ip}`.indexOf('.')){
+		// 解析IP
+		let ipToUse = ip;
+		
+		// 拆分IP
+		const extractedIPv4 = extractIPv4FromIPv6(ip);
+		if (extractedIPv4) {
+			ipToUse = extractedIPv4;
+		}		
+
+		if (isIPv4(ipToUse)) {
 			statsDataTemp.network.v4 ++;
-		}else{
+		} else {
 			statsDataTemp.network.v6 ++;
 		}
 		
