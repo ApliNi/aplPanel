@@ -495,7 +495,7 @@ export const aplPaneReplaceAddr = (host, port) => {
 };
 
 /**
- * 在存储初始化完毕后运行
+ * 在存储初始化完毕后运行, 预建测速文件
  * @param {Object} _storage
  */
 export const aplPaneSyncFileFinish = async (_storage) => {
