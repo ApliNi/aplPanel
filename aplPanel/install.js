@@ -11,7 +11,7 @@ let cluster_js_content = readFileSync(cluster_js_path, { encoding: 'utf8' });
 
 const installData = [
 	{
-		find: /^/,
+		find: /^/g,
 		to: `/* aplPanel Start */import { aplPanelListener, aplPanelServe, aplPaneReplaceAddr, aplPaneInvokeGCFiles, aplPaneSyncFileFinish, dayStartLimiter } from '../aplPanel/main.js';/* aplPanel End */`,
 	}, {
 		// 提供面板服务

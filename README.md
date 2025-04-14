@@ -23,7 +23,7 @@ Node-OpenBMCLAPI Dashboard
 	"proxyMeasureRouteFactory": false,
 	"persistenceSpeedTestFiles": [ 10, 20 ],
 	"ip": "",
-	"dayStartLimiter": 50,
+	"dayStartLimiter": 40,
 	"nodes": {
 		"CLUSTER_ID_1": {
 			"enable": true,
