@@ -21,7 +21,7 @@ Node-OpenBMCLAPI Dashboard
 {
 	"dataPath": "./aplPanel/data",
 	"proxyMeasureRouteFactory": false,
-	"persistenceSpeedTestFiles": [ 10, 20 ],
+	"persistenceSpeedTestFiles": [ 1, 10, 20 ],
 	"ip": "",
 	"dayStartLimiter": 40,
 	"nodes": {
