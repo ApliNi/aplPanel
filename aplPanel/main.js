@@ -468,19 +468,16 @@ export const aplPanelServe = (_app, _storage) => {
  * @param {String} host - 默认域名
  * @param {Number} port - 默认端口
  */
-export const aplPaneReplaceAddr = (host, port) => {
-	const address = { host: host, port: port };
-	try{
-		// 从根目录读取动态地址文件
-		const addrFilePath = path.resolve('./aplPanelAddress.json');
-		if(existsSync(addrFilePath)){
-			const addr = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-			address.host = addr[process.env.CLUSTER_ID]?.host ?? addr[process.env.CLUSTER_PORT]?.host ?? addr.host ?? host;
-			address.port = addr[process.env.CLUSTER_ID]?.port ?? addr[process.env.CLUSTER_PORT]?.port ?? addr.port ?? port;
-			console.log(`[AplPanel] 使用地址: ${address.host}:${address.port}`);
-		}
-	}catch(err){
-		console.warn(`[AplPanel] 读取动态地址文件时出错`, err);
+export const aplPaneReplaceAddr = (host, port, byoc) => {
+	const address = { host: host, port: port, byoc: byoc };
+	// 从根目录读取动态地址文件
+	const addrFilePath = path.resolve('./aplPanelAddress.json');
+	if(existsSync(addrFilePath)){
+		const addr = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
+		address.host = addr[process.env.CLUSTER_ID]?.host ?? addr[process.env.CLUSTER_PORT]?.host ?? addr.host ?? host;
+		address.port = addr[process.env.CLUSTER_ID]?.port ?? addr[process.env.CLUSTER_PORT]?.port ?? addr.port ?? port;
+		address.byoc = addr[process.env.CLUSTER_ID]?.byoc ?? addr[process.env.CLUSTER_PORT]?.byoc ?? addr.byoc ?? byoc;
+		console.log(`[AplPanel] 使用地址: ${address.host}:${address.port} | byoc: ${address.byoc}`);
 	}
 	return address;
 };

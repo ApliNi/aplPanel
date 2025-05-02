@@ -1,11 +1,14 @@
 {
 	"host": "example.com",
 	"port": null,
+	"byoc": null,
 	"CLUSTER_ID__or__CLUSTER_PORT_1": {
+		"byoc": null,
 		"host": null,
 		"port": 60001
 	},
 	"CLUSTER_ID__or__CLUSTER_PORT_2": {
+		"byoc": null,
 		"host": null,
 		"port": 60002
 	},

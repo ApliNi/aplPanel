@@ -23,8 +23,8 @@ const installData = [
 		to: `const { bytes, hits } = await this.storage.express(hashPath, req, res, next);/* aplPanel Start */aplPanelListener(req, bytes, hits);/* aplPanel End */`,
 	}, {
 		// 替换地址
-		find: `port: this.publicPort,`,
-		to: `port: this.publicPort,/* aplPanel Start */...aplPaneReplaceAddr(this.host, this.publicPort),/* aplPanel End */`,
+		find: `flavor: config.flavor,`,
+		to: `flavor: config.flavor,/* aplPanel Start */...aplPaneReplaceAddr(this.host, this.publicPort, ),/* aplPanel End */`,
 	}, {
 		// 替换回收文件时使用的文件列表
 		find: `.gc(files.files)`,
