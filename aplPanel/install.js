@@ -24,7 +24,7 @@ const installData = [
 	}, {
 		// 替换地址
 		find: `flavor: config.flavor,`,
-		to: `flavor: config.flavor,/* aplPanel Start */...aplPaneReplaceAddr(this.host, this.publicPort, ),/* aplPanel End */`,
+		to: `flavor: config.flavor,/* aplPanel Start */...aplPaneReplaceAddr(this.host, this.publicPort, config.byoc),/* aplPanel End */`,
 	}, {
 		// 替换回收文件时使用的文件列表
 		find: `.gc(files.files)`,
