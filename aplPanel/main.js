@@ -6,43 +6,31 @@ import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDa
 import { createHash } from 'crypto';
 import { isIPv4 } from 'net';
 
-const Config = {
+const cfg = {
 	config: {},
-	enableWebPanel: true,
-	allowRobots: false,
 	webNodeIdx: -1,
 	webNodes: [],
 	nodeIds: [],
 };
 await (async () => {
-	const addrFilePath = path.resolve('./aplPanelConfig.json');
-	if(existsSync(addrFilePath)){
-		const cfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
+	const cfgFile = JSON.parse(readFileSync(path.resolve('./aplPanelConfig.json'), { encoding: 'utf8' }));
 
-		Config.config = cfg;
+	cfg.config = cfgFile;
+	if(cfgFile.nodes){
+		cfg.nodeIds = Object.keys(cfgFile.nodes);
+		cfg.webNodeIdx = cfg.nodeIds.indexOf(process.env.CLUSTER_ID);
 
-		if(cfg.nodes){
-			let idx = 0;
-			for(const nodeId in cfg.nodes){
-				const node = cfg.nodes[nodeId];
+		for(const nodeId in cfgFile.nodes){
+			const node = cfgFile.nodes[nodeId];
 
-				if(nodeId === process.env.CLUSTER_ID){
-					if(node.enable === false) Config.enableWebPanel = false;
-					if(node.allowRobots === true) Config.allowRobots = true;
-					Config.webNodeIdx = idx;
-				}
-
-				Config.webNodes.push({
-					title: node.title,
-					name: node.name,
-				});
-				Config.nodeIds.push(nodeId);
-				idx++;
-			}
+			cfg.webNodes.push({
+				title: node.title,
+				name: node.name,
+			});
 		}
 	}
 
-	Config.config.dataPath ??= './aplPanel/data';
+	cfg.config.dataPath ??= './aplPanel/data';
 })();
 
 const statsDataTemp = {
@@ -94,7 +82,7 @@ const scrollingUpdateStatsData = (sd) => {
 	sd.date = nowDate;
 };
 
-const dataPath = path.resolve(Config.config.dataPath);
+const dataPath = path.resolve(cfg.config.dataPath);
 const statsFilePath = path.join(dataPath, `./stats_${process.env.CLUSTER_ID || 'default'}.json`);
 await (async () => {
 
@@ -258,11 +246,14 @@ export const aplPanelListener = async (req, bytes, hits) => {
 			statsDataTemp.device['[Other]']++;
 		}
 
-		const ip = Config.config?.ip ? req.headers[Config.config.ip] || req.ip : req.ip;
+		const ip = cfg.config?.ip ? req.headers[cfg.config.ip] || req.ip : req.ip;
 		if(!ip){
 			statsDataTemp.network.none++;
 			return;
 		}
+
+		// 如果是本机地址则不记录
+		if(cfg.config.noStatsLocalIp && (ip === '::ffff:127.0.0.1' || ip === '127.0.0.1' || ip === '::1')) return;
 
 		// 从 ipv4 mapped ipv6 地址中拆分 ipv4
 		if(ip.startsWith('::ffff:')){
@@ -295,9 +286,9 @@ export const aplPanelListener = async (req, bytes, hits) => {
 export const aplPanelServe = (_app, _storage) => {
 	console.log(`[AplPanel] aplPanelServe`);
 
-	if(Config.enableWebPanel){
+	if(cfg.config.nodes[process.env.CLUSTER_ID]?.enable){
 		console.log(`[AplPanel] 启用面板服务`);
-		if(Config.allowRobots){
+		if(cfg.config.nodes[process.env.CLUSTER_ID]?.allowRobots){
 			_app.get('/robots.txt', (req, res) => {
 				res.type('text/plain');
 				res.send('User-agent: *\nAllow: /dashboard');
@@ -336,7 +327,7 @@ export const aplPanelServe = (_app, _storage) => {
 
 			// ./api/stats?idx=
 			const inp = {
-				idx: Number(req.query?.idx ?? Config.webNodeIdx),
+				idx: Number(req.query?.idx ?? cfg.webNodeIdx),
 			};
 
 			/**
@@ -345,7 +336,7 @@ export const aplPanelServe = (_app, _storage) => {
 			 */
 			const getNodeStatsData = async (nodeId) => {
 				try{
-					const url = Config.config.nodes[nodeId]?.url;
+					const url = cfg.config.nodes[nodeId]?.url;
 					if(url){
 						const res = await fetch(`${url.replace(/\/$/, '')}/api/stats?idx=-1`);
 						const data = await res.json();
@@ -359,21 +350,21 @@ export const aplPanelServe = (_app, _storage) => {
 				}
 			};
 
-			if(inp.idx !== Config.webNodeIdx && Config.nodeIds[inp.idx]){
+			if(inp.idx !== cfg.webNodeIdx && cfg.nodeIds[inp.idx]){
 				// 提供其他节点的数据
 				try{
 
 					// 提供所有节点的数据
-					if(Config.nodeIds[inp.idx] === '_ALL_'){
+					if(cfg.nodeIds[inp.idx] === '_ALL_'){
 						// 读取所有节点的信息
-						for(let idx = 0; idx < Config.nodeIds.length; idx++){
+						for(let idx = 0; idx < cfg.nodeIds.length; idx++){
 							if(nodeDataCache[idx]){
 								continue;
 							}
-							if(idx === Config.webNodeIdx){
+							if(idx === cfg.webNodeIdx){
 								continue;
 							}
-							const nodeId = Config.nodeIds[idx];
+							const nodeId = cfg.nodeIds[idx];
 							if(nodeId.length !== 24){
 								continue;
 							}
@@ -397,7 +388,7 @@ export const aplPanelServe = (_app, _storage) => {
 						}
 						res.json({
 							statsData: nodeDataCache_all,
-							webNodes: Config.webNodes,
+							webNodes: cfg.webNodes,
 							webNodeIdx: inp.idx,
 						});
 						return;
@@ -405,7 +396,7 @@ export const aplPanelServe = (_app, _storage) => {
 
 					// 提供其他节点的数据
 					if(!nodeDataCache[inp.idx]){
-						const sd = await getNodeStatsData(Config.nodeIds[inp.idx]);
+						const sd = await getNodeStatsData(cfg.nodeIds[inp.idx]);
 						if(!sd){
 							res.json(null);
 							return;
@@ -415,7 +406,7 @@ export const aplPanelServe = (_app, _storage) => {
 					}
 					res.json({
 						statsData: nodeDataCache[inp.idx],
-						webNodes: Config.webNodes,
+						webNodes: cfg.webNodes,
 						webNodeIdx: inp.idx,
 					});
 				}catch(err){
@@ -427,14 +418,14 @@ export const aplPanelServe = (_app, _storage) => {
 				res.json({
 					statsData: statsData,
 					statsDataTemp: statsDataTemp,
-					webNodes: Config.webNodes,
-					webNodeIdx: Config.webNodeIdx,
+					webNodes: cfg.webNodes,
+					webNodeIdx: cfg.webNodeIdx,
 				});
 			}
 		});
 	}
 
-	if(Config.config?.proxyMeasureRouteFactory){
+	if(cfg.config?.proxyMeasureRouteFactory){
 		console.log(`[AplPanel] 启用测速代理`);
 
 		// ./dist/util.js
@@ -460,7 +451,7 @@ export const aplPanelServe = (_app, _storage) => {
 			if(isNaN(size) || size > 200) return res.sendStatus(400);
 
 			// 如果预建测速文件, 则不检查文件存在
-			if(!Config.config?.persistenceSpeedTestFiles?.includes(size)){
+			if(!cfg.config?.persistenceSpeedTestFiles?.includes(size)){
 				await generateSpeedTestFile(_storage, size);
 			}
 
@@ -500,9 +491,9 @@ export const aplPaneReplaceAddr = (host, port) => {
  */
 export const aplPaneSyncFileFinish = async (_storage) => {
 	// 预建测速文件
-	if(Config.config?.proxyMeasureRouteFactory){
-		console.log(`[AplPanel] 预建测速文件: [ ${Config.config?.persistenceSpeedTestFiles?.join(', ')} ]`);
-		for(const size of Config.config?.persistenceSpeedTestFiles ?? []){
+	if(cfg.config?.proxyMeasureRouteFactory){
+		console.log(`[AplPanel] 预建测速文件: [ ${cfg.config?.persistenceSpeedTestFiles?.join(', ')} ]`);
+		for(const size of cfg.config?.persistenceSpeedTestFiles ?? []){
 			await generateSpeedTestFile(_storage, size);
 		}
 	}
@@ -533,8 +524,8 @@ export const aplPaneInvokeGCFiles = (files) => {
 	const addFiles = [];
 
 	// 排除测速文件
-	if(Config.config?.proxyMeasureRouteFactory){
-		for(const size of Config.config?.persistenceSpeedTestFiles ?? []){
+	if(cfg.config?.proxyMeasureRouteFactory){
+		for(const size of cfg.config?.persistenceSpeedTestFiles ?? []){
 			addFiles.push({
 				path: '',
 				hash: `${size}`,
@@ -551,7 +542,7 @@ export const aplPaneInvokeGCFiles = (files) => {
 // https://github.com/ApliNi/blog/blob/main/Tools/Start-Limiter.js
 export const dayStartLimiter = async () => {
 
-	const Limit = Config.config?.dayStartLimiter ?? 50;
+	const Limit = cfg.config?.dayStartLimiter ?? 50;
 	const dayNum = new Date().getDate();
 
 	console.log(`[AplPanel] [dayStartLimiter] 启动计数: ${statsData._startLimiter[1] + 1} / ${Limit}`);
