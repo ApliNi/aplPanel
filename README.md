@@ -44,8 +44,7 @@ Node-OpenBMCLAPI Dashboard
 		"_ALL_": {
 			"title": "ApliNi's OpenBMCLAPI Dashboard All",
 			"name": "[ALL]"
-		},
-		"doc": "设置显示在仪表盘上的信息"
+		}
 	}
 }
 ```
@@ -85,14 +84,28 @@ Node-OpenBMCLAPI Dashboard
 	"CLUSTER_ID__or__CLUSTER_PORT_2": {
 		"clusterIp": "oba2.example.com",
 		"clusterPublicPort": 443
-	},
-	"doc": "每个节点 ID 的配置 > 每个本地端口的配置 > 全局配置 > 默认值 (环境变量). 可使用 null 值跳过配置",
-	"doc2": "可以包含 ./dist/config.js 中的所有配置项"
+	}
 }
 ```
 
+- 通过 env 中的 CLUSTER_ID 或 CLUSTER_PORT 定位节点, 推荐在启动脚本中设置端口, 其余配置全部放在配置文件中
 - `clusterIp`, `clusterPublicPort`: 这两项配置会在每次上线时重新加载, 其余配置只会在启动时应用一次
 - 可以在里面添加其他配置选项, 具体查看 `./dist/config.js` 文件
+```js
+clusterId = env.get('CLUSTER_ID').required().asString();
+clusterSecret = env.get('CLUSTER_SECRET').required().asString();
+clusterIp = env.get('CLUSTER_IP').asString();
+port = env.get('CLUSTER_PORT').default(4000).asPortNumber();
+clusterPublicPort = env.get('CLUSTER_PUBLIC_PORT').default(this.port).asPortNumber();
+byoc = env.get('CLUSTER_BYOC').asBool();
+disableAccessLog = env.get('DISABLE_ACCESS_LOG').asBool();
+enableNginx = env.get('ENABLE_NGINX').asBool();
+enableUpnp = env.get('ENABLE_UPNP').asBool();
+storage = env.get('CLUSTER_STORAGE').default('file').asString();
+storageOpts = env.get('CLUSTER_STORAGE_OPTIONS').asJsonObject();
+sslKey = env.get('SSL_KEY').asString();
+sslCert = env.get('SSL_CERT').asString();
+```
 
 ## 特性
 安装:
