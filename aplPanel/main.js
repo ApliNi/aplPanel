@@ -474,9 +474,9 @@ export const aplPaneReplaceAddr = (host, port) => {
 	const addrFilePath = path.resolve('./aplPanelAddress.json');
 	if(existsSync(addrFilePath)){
 		const addr = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-		address.host = addr[process.env.CLUSTER_ID]?.host ?? addr[process.env.CLUSTER_PORT]?.host ?? addr.host ?? host;
-		address.port = addr[process.env.CLUSTER_ID]?.port ?? addr[process.env.CLUSTER_PORT]?.port ?? addr.port ?? port;
-		console.log(`[AplPanel] 使用地址: ${address.host}:${address.port} | byoc: ${address.byoc}`);
+		address.host = addr[process.env.CLUSTER_ID]?.clusterIp ?? addr[process.env.CLUSTER_PORT]?.clusterIp ?? addr.clusterIp ?? host;
+		address.port = addr[process.env.CLUSTER_ID]?.clusterPublicPort ?? addr[process.env.CLUSTER_PORT]?.clusterPublicPort ?? addr.clusterPublicPort ?? port;
+		console.log(`[AplPanel] 使用地址: ${address.host}:${address.port}`);
 	}
 	return address;
 };

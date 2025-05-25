@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'fs';
+import path from 'path';
 
 export const aplPanelConfigReplace = (instance) => {
 

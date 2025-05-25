@@ -74,24 +74,24 @@ Node-OpenBMCLAPI Dashboard
 
 ```json
 {
-	"host": "example.com",
-	"port": null,
 	"byoc": false,
+	"clusterIp": null,
+	"clusterPublicPort": 443,
 	"CLUSTER_ID__or__CLUSTER_PORT_1": {
-		"host": null,
 		"byoc": true,
-		"port": 60001
+		"clusterIp": "oba1.example.com",
+		"clusterPublicPort": 443
 	},
 	"CLUSTER_ID__or__CLUSTER_PORT_2": {
-		"host": null,
-		"port": 60002
+		"clusterIp": "oba2.example.com",
+		"clusterPublicPort": 443
 	},
 	"doc": "每个节点 ID 的配置 > 每个本地端口的配置 > 全局配置 > 默认值 (环境变量). 可使用 null 值跳过配置",
 	"doc2": "可以包含 ./dist/config.js 中的所有配置项"
 }
 ```
 
-- `host`, `port`: 这两项配置会实时加载, 其余配置只会在启动时读取一次
+- `clusterIp`, `clusterPublicPort`: 这两项配置会在每次上线时重新加载, 其余配置只会在启动时应用一次
 - 可以在里面添加其他配置选项, 具体查看 `./dist/config.js` 文件
 
 ## 特性
