@@ -26,10 +26,15 @@ Node-OpenBMCLAPI Dashboard
 	"ip": "",
 	"statsExcludeIp": [ "127.0.0.1" ],
 	"dayStartLimiter": 24,
-	"env": {
-		"clusterPublicPort": 443
-	},
 	"nodes": {
+		"_ALL_": {
+			"enablePanel": true,
+			"name": "[ALL]",
+			"title": "ApliNi's OpenBMCLAPI Dashboard All",
+			"env": {
+				"clusterPublicPort": 443
+			}
+		},
 		"CLUSTER_ID or CLUSTER_PORT 1": {
 			"enablePanel": true,
 			"name": "[Node.1]",
@@ -50,14 +55,9 @@ Node-OpenBMCLAPI Dashboard
 				"clusterIp": "oba2.site.com",
 				"clusterPublicPort": 443
 			}
-		},
-		"_ALL_": {
-			"name": "[ALL]",
-			"title": "ApliNi's OpenBMCLAPI Dashboard All"
 		}
 	}
 }
-
 ```
 
 - `dataPath`: 可以将所有节点的数据路径配置在同一个位置, 支持绝对位置, 默认无需修改
