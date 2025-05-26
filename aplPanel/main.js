@@ -4,7 +4,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject, generateSpeedTestFile } from './util.js';
 import { createHash } from 'crypto';
-import { isIPv4 } from 'net';
+import { isIPv4, isIPv6 } from 'net';
 
 const cfg = {
 	config: {},
@@ -264,8 +264,13 @@ export const aplPanelListener = async (req, bytes, hits) => {
 
 		if(isIPv4(ip)){
 			statsDataTemp.network.v4++;
-		}else{
+		}
+		else if(isIPv6(ip)){
 			statsDataTemp.network.v6++;
+		}
+		else{
+			console.log(`[AplPanel] [debug] 未知的 IP 类型: ${ip}`);
+			statsDataTemp.network.none++;
 		}
 
 	}catch(err){
