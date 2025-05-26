@@ -11,6 +11,7 @@ const cfg = {
 	webNodeIdx: -1,
 	webNodes: [],
 	nodeIds: [],
+	statsExcludeIp: {},
 };
 await (async () => {
 	const cfgFile = JSON.parse(readFileSync(path.resolve('./aplPanelConfig.json'), { encoding: 'utf8' }));
@@ -28,6 +29,10 @@ await (async () => {
 				name: node.name,
 			});
 		}
+	}
+
+	for(const ip of cfg.config.statsExcludeIp ?? []){
+		cfg.statsExcludeIp[ip] = true;
 	}
 
 	cfg.config.dataPath ??= './aplPanel/data';
@@ -246,25 +251,16 @@ export const aplPanelListener = async (req, bytes, hits) => {
 			statsDataTemp.device['[Other]']++;
 		}
 
-		const ip = cfg.config?.ip ? req.headers[cfg.config.ip] || req.ip : req.ip;
+		let ip = cfg.config?.ip ? req.headers[cfg.config.ip] || req.ip : req.ip;
 		if(!ip){
 			statsDataTemp.network.none++;
 			return;
 		}
 
-		// 如果是本机地址则不记录
-		if(cfg.config.noStatsLocalIp && (ip === '::ffff:127.0.0.1' || ip === '127.0.0.1' || ip === '::1')) return;
+		if(ip.startsWith('::ffff:')) ip = ip.substring(7);
 
-		// 从 ipv4 mapped ipv6 地址中拆分 ipv4
-		if(ip.startsWith('::ffff:')){
-			// 移除前缀
-			if(isIPv4(ip.substring(7))){
-				statsDataTemp.network.v4++;
-			}else{
-				statsDataTemp.network.v6++;
-			}
-			return;
-		}
+		// 排除本地地址
+		if(cfg.statsExcludeIp[ip]) return;
 
 		if(isIPv4(ip)){
 			statsDataTemp.network.v4++;

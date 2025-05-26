@@ -3,7 +3,7 @@
 	"proxyMeasureRouteFactory": false,
 	"persistenceSpeedTestFiles": [ 1, 10, 20, 40 ],
 	"ip": "",
-	"noStatsLocalIp": true,
+	"statsExcludeIp": [ "127.0.0.1" ],
 	"dayStartLimiter": 40,
 	"nodes": {
 		"CLUSTER_ID_1": {
