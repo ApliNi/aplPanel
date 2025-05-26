@@ -63,7 +63,7 @@ Node-OpenBMCLAPI Dashboard
 - `dataPath`: 可以将所有节点的数据路径配置在同一个位置, 支持绝对位置, 默认无需修改
 - `proxyMeasureRouteFactory`: 将测速文件保存到存储目录, 并使用存储提供测速文件, 仅供 WebDav 存储使用
 - `persistenceSpeedTestFiles`: 预建测速文件列表, 填写文件大小数值 (MB), 仅供 WebDav 存储使用
-- `cacheSpeedTestFileUrl`: 提前缓存测速文件重定向地址, 仅供 WebDav 存储使用
+- `cacheSpeedTestFileUrl`: 提前缓存测速文件重定向地址, 对测速效果几乎没有提升, 仅供 WebDav 存储使用
 - `ip`: 留空使用默认获取的 ip 地址, 可选择请求头中的 ip 地址 (如填写 `x-forwarded-for` 或 `cf-connecting-ip`)
 - `statsExcludeIp`: 用于排除统计中的本地 ip 地址
 - `dayStartLimiter`: 限制每天的启动次数, 超过次数则等待到第二天再启动

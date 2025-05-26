@@ -471,8 +471,10 @@ export const aplPanelServe = (_app, _storage) => {
 
 			for(const size of cfg.config?.persistenceSpeedTestFiles ?? []){
 				const req = {
+					headers: {
+						// range: '',
+					},
 					params: {
-						range: null,
 						size: size,
 					}
 				};
