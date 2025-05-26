@@ -15,7 +15,7 @@ Node-OpenBMCLAPI Dashboard
 
 ### 配置文件 & 多个节点
 面板支持在一个节点上切换显示多个节点的信息.
-在 `./aplPanelConfig.json` 中配置每个节点的 CLUSTER_ID 和显示文本即可.
+在 `./aplPanelConfig.json` 中配置每个节点的 CLUSTER_ID 或 CLUSTER_PORT 和显示文本即可.
 
 ```json
 {
@@ -24,29 +24,39 @@ Node-OpenBMCLAPI Dashboard
 	"persistenceSpeedTestFiles": [ 1, 10, 20, 40 ],
 	"ip": "",
 	"statsExcludeIp": [ "127.0.0.1" ],
-	"dayStartLimiter": 40,
+	"dayStartLimiter": 24,
+	"env": {
+		"clusterPublicPort": 443
+	},
 	"nodes": {
-		"CLUSTER_ID_1": {
-			"enable": true,
-			"title": "ApliNi's OpenBMCLAPI Dashboard",
-			"name": "[Node.1]"
+		"CLUSTER_ID or CLUSTER_PORT 1": {
+			"enablePanel": true,
+			"name": "[Node.1]",
+			"title": "ApliNi's OpenBMCLAPI Dashboard 1",
+			"env": {
+				"port": 4001,
+				"clusterIp": "oba1.site.com",
+				"clusterPublicPort": 443
+			}
 		},
-		"CLUSTER_ID_2": {
-			"enable": false,
-			"title": "ApliNi's OpenBMCLAPI Dashboard",
-			"name": "[Node.2]"
-		},
-		"CLUSTER_ID_3": {
-			"title": "ApliNi's OpenBMCLAPI Dashboard",
-			"name": "[Node.3]",
-			"url": "https://bmclapi-2-node.ipacel.cc/dashboard/"
+		"CLUSTER_ID or CLUSTER_PORT 2": {
+			"enablePanel": false,
+			"name": "[Node.2]",
+			"title": "ApliNi's OpenBMCLAPI Dashboard 2",
+			"url": "https://bmclapi-2-node.ipacel.cc/dashboard/",
+			"env": {
+				"port": 4002,
+				"clusterIp": "oba2.site.com",
+				"clusterPublicPort": 443
+			}
 		},
 		"_ALL_": {
-			"title": "ApliNi's OpenBMCLAPI Dashboard All",
-			"name": "[ALL]"
+			"name": "[ALL]",
+			"title": "ApliNi's OpenBMCLAPI Dashboard All"
 		}
 	}
 }
+
 ```
 
 - `dataPath`: 可以将所有节点的数据路径配置在同一个位置, 支持绝对位置, 默认无需修改
@@ -55,41 +65,21 @@ Node-OpenBMCLAPI Dashboard
 - `ip`: 留空使用默认获取的 ip 地址, 可选择请求头中的 ip 地址 (如填写 `x-forwarded-for` 或 `cf-connecting-ip`)
 - `statsExcludeIp`: 用于排除统计中的本地 ip 地址
 - `dayStartLimiter`: 限制每天的启动次数, 超过次数则等待到第二天再启动
+- `env`: 存放节点默认配置
 - `nodes`: 在面板上显示的其他节点信息
 	- `enable`: [默认 true] 允许关闭这个节点的 web 面板, 但保持数据记录继续运行 (这几乎不会节省性能)
 	- `allowRobots`: [默认 false] 允许面板被搜索引擎收录
 	- `title`: [必选] 面板顶栏左侧标题文字
 	- `name`: [必选] 面板顶栏右侧节点名称按钮文字
 	- `url`: [可选] 连接到其他远程面板, 填写其他面板的固定公网地址即可
+	- `env`: 存放每个节点的配置
 	- 使用 `_ALL_` 作为键名则会合并所有节点的统计信息
 
 通过这些配置, 我们可以最小化的暴露面板到公网, 并同时查看其他节点的数据.
 
-### 动态地址
-每次注册节点时读取 `./aplPanelAddress.json` 文件中的地址, 若不存在, 则保持默认值 (环境变量).
-此功能主要用于与其他特殊的内网穿透工具及脚本配合工作.
-
-注意: 可能依然需要在全局变量中设定一个公网地址和端口 (它不一定是真实的), 因为本程序没有处理更多的检查.
-
-```json
-{
-	"byoc": false,
-	"clusterIp": null,
-	"clusterPublicPort": 443,
-	"CLUSTER_ID__or__CLUSTER_PORT_1": {
-		"byoc": true,
-		"clusterIp": "oba1.example.com",
-		"clusterPublicPort": 443
-	},
-	"CLUSTER_ID__or__CLUSTER_PORT_2": {
-		"clusterIp": "oba2.example.com",
-		"clusterPublicPort": 443
-	}
-}
-```
-
-- 通过 env 中的 CLUSTER_ID 或 CLUSTER_PORT 定位节点, 推荐在启动脚本中设置端口, 其余配置全部放在配置文件中
-- `clusterIp`, `clusterPublicPort`: 这两项配置会在每次上线时重新加载, 其余配置只会在启动时应用一次
+### env
+- 面板通过节点配置的 CLUSTER_ID 或 CLUSTER_PORT 来定位节点, 推荐在启动脚本中设置端口, 其余配置全部放在配置文件中
+- `clusterIp`, `clusterPublicPort`: 这两项配置会在每次上线时重新加载, 其余配置只会在启动时应用一次 (此功能用于配合其他特殊的内网穿透工具工作)
 - 可以在里面添加其他配置选项, 具体查看 `./dist/config.js` 文件
 ```js
 clusterId = env.get('CLUSTER_ID').required().asString();

@@ -3,12 +3,11 @@ import path from 'path';
 
 export const aplPanelConfigReplace = (instance) => {
 
-	const addrFilePath = path.resolve('./aplPanelAddress.json');
+	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(!existsSync(addrFilePath)) return;
 
-	const file = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-	const cfg = file[process.env.CLUSTER_ID] ?? file[process.env.CLUSTER_PORT];
-	if(!cfg) return;
+	const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
+	const nodeEnv = nowCfg.nodes?.[process.env.CLUSTER_ID]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_PORT]?.env;
 
 	// 获取所有可用的配置
 	const keyMap = Object.keys(instance).filter(key => ![
@@ -20,8 +19,8 @@ export const aplPanelConfigReplace = (instance) => {
 
 	let idx = 0;
 	for(const key of keyMap){
-		const newCfg = cfg[key] ?? file[key];
-		if(newCfg === undefined || newCfg === null) continue;
+		const newCfg = nodeEnv[key] ?? nowCfg.nodes?._ALL_?.env?.[key];
+		if(newCfg === undefined) continue;
 		idx++;
 		instance[key] = newCfg;
 	}

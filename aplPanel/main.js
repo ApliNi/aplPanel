@@ -19,7 +19,9 @@ await (async () => {
 	cfg.config = cfgFile;
 	if(cfgFile.nodes){
 		cfg.nodeIds = Object.keys(cfgFile.nodes);
-		cfg.webNodeIdx = cfg.nodeIds.indexOf(process.env.CLUSTER_ID);
+		const idx1 = cfg.nodeIds.indexOf(process.env.CLUSTER_ID);
+		const idx2 = cfg.nodeIds.indexOf(process.env.CLUSTER_PORT);
+		cfg.webNodeIdx = idx1 === -1 ? idx2 : idx1;
 
 		for(const nodeId in cfgFile.nodes){
 			const node = cfgFile.nodes[nodeId];
@@ -287,9 +289,11 @@ export const aplPanelListener = async (req, bytes, hits) => {
 export const aplPanelServe = (_app, _storage) => {
 	console.log(`[AplPanel] aplPanelServe`);
 
-	if(cfg.config.nodes[process.env.CLUSTER_ID]?.enable){
+	const nodeCfg = cfg.config.nodes[process.env.CLUSTER_ID] ?? cfg.config.nodes[process.env.CLUSTER_PORT];
+
+	if(nodeCfg?.enablePanel){
 		console.log(`[AplPanel] 启用面板服务`);
-		if(cfg.config.nodes[process.env.CLUSTER_ID]?.allowRobots){
+		if(nodeCfg?.allowRobots){
 			_app.get('/robots.txt', (req, res) => {
 				res.type('text/plain');
 				res.send('User-agent: *\nAllow: /dashboard');
@@ -328,7 +332,7 @@ export const aplPanelServe = (_app, _storage) => {
 
 			// ./api/stats?idx=
 			const inp = {
-				idx: Number(req.query?.idx ?? cfg.webNodeIdx),
+				idx: Number(req.query?.idx ?? 0),
 			};
 
 			/**
@@ -472,11 +476,12 @@ export const aplPanelServe = (_app, _storage) => {
 export const aplPaneReplaceAddr = (host, port) => {
 	const address = { host: host, port: port };
 	// 从根目录读取动态地址文件
-	const addrFilePath = path.resolve('./aplPanelAddress.json');
+	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(existsSync(addrFilePath)){
-		const addr = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-		address.host = addr[process.env.CLUSTER_ID]?.clusterIp ?? addr[process.env.CLUSTER_PORT]?.clusterIp ?? addr.clusterIp ?? host;
-		address.port = addr[process.env.CLUSTER_ID]?.clusterPublicPort ?? addr[process.env.CLUSTER_PORT]?.clusterPublicPort ?? addr.clusterPublicPort ?? port;
+		const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
+		const nodeEnv = nowCfg.nodes?.[process.env.CLUSTER_ID]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_PORT]?.env;
+		address.host = nodeEnv?.clusterIp ??			nowCfg.nodes?._ALL_?.env?.clusterIp ??			host;
+		address.port = nodeEnv?.clusterPublicPort ??	nowCfg.nodes?._ALL_?.env?.clusterPublicPort ??	port;
 		console.log(`[AplPanel] 使用地址: ${address.host}:${address.port}`);
 	}
 	return address;
