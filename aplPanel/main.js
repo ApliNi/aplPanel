@@ -153,7 +153,7 @@ await (async () => {
 	const startStatsDataSave = async () => {
 
 		// 主要线程等待同步线程写入文件完毕后再运行保存
-		if(ThreadModeMain) await sleep(500);
+		if(ThreadModeMain) await sleep(1500);
 
 		await readStatsFile();
 
