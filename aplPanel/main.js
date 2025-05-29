@@ -7,7 +7,7 @@ import { createHash } from 'crypto';
 import { isIPv4, isIPv6 } from 'net';
 
 // 获取启动参数 -p=1234
-const ClusterPort = process.argv.find(arg => arg.startsWith('-p='))?.slice(3);
+const ClusterPort = Number(process.argv.find(arg => arg.startsWith('-p='))?.slice(3));
 
 const cfg = {
 	config: {},

@@ -2,9 +2,11 @@ import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
 // 获取启动参数 -p=1234
-const ClusterPort = process.argv.find(arg => arg.startsWith('-p='))?.slice(3);
+const ClusterPort = Number(process.argv.find(arg => arg.startsWith('-p='))?.slice(3));
 
 export const aplPanelConfigReplace = (instance) => {
+
+	instance.port = ClusterPort;
 
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(!existsSync(addrFilePath)) return;
