@@ -38,7 +38,7 @@ Node-OpenBMCLAPI Dashboard
 				"clusterPublicPort": 443
 			}
 		},
-		"CLUSTER_ID or CLUSTER_PORT 1": {
+		"CLUSTER_ID or CLUSTER_PORT": {
 			"enablePanel": true,
 			"name": "[Node.1]",
 			"title": "ApliNi's OpenBMCLAPI Dashboard 1",
