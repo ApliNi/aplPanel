@@ -7,7 +7,7 @@ import { createHash } from 'crypto';
 import { isIPv4, isIPv6 } from 'net';
 
 // 获取启动参数 -p=1234
-const ClusterPort = Number(process.argv.find(arg => arg.startsWith('-p='))?.slice(3));
+const ClusterPort = Number(process.argv.find(arg => arg.startsWith('-p='))?.slice(3)) || process.env.CLUSTER_PORT;
 
 const cfg = {
 	config: {},
@@ -23,7 +23,7 @@ await (async () => {
 	if(cfgFile.nodes){
 		cfg.nodeIds = Object.keys(cfgFile.nodes);
 		const idx1 = cfg.nodeIds.indexOf(process.env.CLUSTER_ID);
-		const idx2 = cfg.nodeIds.indexOf(ClusterPort ?? process.env.CLUSTER_PORT);
+		const idx2 = cfg.nodeIds.indexOf(ClusterPort);
 		cfg.webNodeIdx = idx1 === -1 ? idx2 : idx1;
 
 		for(const nodeId in cfgFile.nodes){
@@ -292,7 +292,7 @@ export const aplPanelListener = async (req, bytes, hits) => {
 export const aplPanelServe = (_app, _storage) => {
 	console.log(`[AplPanel] aplPanelServe`);
 
-	const nodeCfg = cfg.config.nodes[ClusterPort ?? process.env.CLUSTER_PORT] ?? cfg.config.nodes[process.env.CLUSTER_ID];
+	const nodeCfg = cfg.config.nodes[ClusterPort] ?? cfg.config.nodes[process.env.CLUSTER_ID];
 
 	if(nodeCfg?.enablePanel){
 		console.log(`[AplPanel] 启用面板服务`);
@@ -511,7 +511,7 @@ export const aplPaneReplaceAddr = (host, port) => {
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(existsSync(addrFilePath)){
 		const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-		const nodeEnv = nowCfg.nodes?.[ClusterPort ?? process.env.CLUSTER_PORT]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_ID]?.env;
+		const nodeEnv = nowCfg.nodes?.[ClusterPort]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_ID]?.env;
 		address.host = nodeEnv?.clusterIp ??			nowCfg.nodes?._ALL_?.env?.clusterIp ??			host;
 		address.port = nodeEnv?.clusterPublicPort ??	nowCfg.nodes?._ALL_?.env?.clusterPublicPort ??	port;
 		console.log(`[AplPanel] 使用地址: ${address.host}:${address.port}`);

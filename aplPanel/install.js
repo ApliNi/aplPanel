@@ -37,8 +37,10 @@ if(true){
 	
 	const installData = [
 		{ find: /^/g, to: `/* aplPanel Start */import { aplPanelConfigReplace } from '../aplPanel/configReplace.js';/* aplPanel End */` },
-		// 提供面板服务
-		{ find: `Config.instance = new Config();`, to: `Config.instance = new Config();/* aplPanel Start */ aplPanelConfigReplace(Config.instance); // /* aplPanel End */` },
+		// 替换配置
+		{ find: `return Config.instance;`, to: `/* aplPanel Start */return aplPanelConfigReplace(Config.instance); // /* aplPanel End */return Config.instance;` },
+		// 移除 env 必须配置要求
+		{ find: `.required().asString();`, to: `/* aplPanel Start */.asString(); // /* aplPanel End */.required().asString();` },
 	];
 	
 	for(const data in installData){
