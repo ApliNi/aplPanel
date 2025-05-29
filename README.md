@@ -13,6 +13,9 @@ Node-OpenBMCLAPI Dashboard
 
 > 以下配置不影响面板运行 (如果遇到问题, 请提交 Issue)
 
+### 启动参数
+- 指定端口: `-p=4000` - 用于设置节点监听端口, 配合配置文件的 env 部分使用
+
 ### 配置文件 & 多个节点
 面板支持在一个节点上切换显示多个节点的信息.
 在 `./aplPanelConfig.json` 中配置每个节点的 CLUSTER_ID 或 CLUSTER_PORT 和显示文本即可.
@@ -42,18 +45,20 @@ Node-OpenBMCLAPI Dashboard
 			"env": {
 				"port": 4001,
 				"clusterIp": "oba1.site.com",
-				"clusterPublicPort": 443
+				"clusterPublicPort": 4001
 			}
 		},
-		"CLUSTER_ID or CLUSTER_PORT 2": {
+		"4002": {
 			"enablePanel": false,
 			"name": "[Node.2]",
 			"title": "ApliNi's OpenBMCLAPI Dashboard 2",
 			"url": "https://bmclapi-2-node.ipacel.cc/dashboard/",
 			"env": {
-				"port": 4002,
+				"clusterId": "xxxxxxx",
+				"clusterSecret": "xxxxxxx",
+				"byoc": false,
 				"clusterIp": "oba2.site.com",
-				"clusterPublicPort": 443
+				"clusterPublicPort": 4002
 			}
 		}
 	}
