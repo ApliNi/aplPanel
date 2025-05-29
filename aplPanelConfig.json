@@ -29,13 +29,15 @@
 			"enablePanel": false,
 			"name": "[Node.2]",
 			"title": "ApliNi's OpenBMCLAPI Dashboard 2",
-			"url": "https://bmclapi-2-node.ipacel.cc/dashboard/",
+			"url": "https://oba2.site.com/dashboard/",
 			"env": {
+				"port": 4002,
+				"byoc": false,
 				"clusterId": "xxxxxxx",
 				"clusterSecret": "xxxxxxx",
-				"byoc": false,
+				"storageOpts": { "url":"http://127.0.0.1:5244/dav", "basePath":"pan/OpenBmclApi/download", "username":"username", "password":"password" },
 				"clusterIp": "oba2.site.com",
-				"clusterPublicPort": 4002
+				"clusterPublicPort": 443
 			}
 		}
 	}
