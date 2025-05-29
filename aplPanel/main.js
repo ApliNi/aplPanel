@@ -5,9 +5,7 @@ import path from 'path';
 import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject, generateSpeedTestFile } from './util.js';
 import { createHash } from 'crypto';
 import { isIPv4, isIPv6 } from 'net';
-
-// 获取启动参数 -p=1234
-const ClusterPort = Number(process.argv.find(arg => arg.startsWith('-p='))?.slice(3)) || process.env.CLUSTER_PORT;
+import { nodeConfig } from './configReplace.js';
 
 const cfg = {
 	config: {},
@@ -22,8 +20,8 @@ await (async () => {
 	cfg.config = cfgFile;
 	if(cfgFile.nodes){
 		cfg.nodeIds = Object.keys(cfgFile.nodes);
-		const idx1 = cfg.nodeIds.indexOf(process.env.CLUSTER_ID);
-		const idx2 = cfg.nodeIds.indexOf(ClusterPort);
+		const idx1 = cfg.nodeIds.indexOf(nodeConfig.port);
+		const idx2 = cfg.nodeIds.indexOf(nodeConfig.clusterId);
 		cfg.webNodeIdx = idx1 === -1 ? idx2 : idx1;
 
 		for(const nodeId in cfgFile.nodes){
@@ -93,7 +91,7 @@ const scrollingUpdateStatsData = (sd) => {
 };
 
 const dataPath = path.resolve(cfg.config.dataPath);
-const statsFilePath = path.join(dataPath, `./stats_${process.env.CLUSTER_ID || 'default'}.json`);
+const statsFilePath = path.join(dataPath, `./stats_${nodeConfig.clusterId || 'default'}.json`);
 await (async () => {
 
 	// 创建数据目录
@@ -292,7 +290,7 @@ export const aplPanelListener = async (req, bytes, hits) => {
 export const aplPanelServe = (_app, _storage) => {
 	console.log(`[AplPanel] aplPanelServe`);
 
-	const nodeCfg = cfg.config.nodes[ClusterPort] ?? cfg.config.nodes[process.env.CLUSTER_ID];
+	const nodeCfg = cfg.config.nodes[nodeConfig.port] ?? cfg.config.nodes[nodeConfig.clusterId];
 
 	if(nodeCfg?.enablePanel){
 		console.log(`[AplPanel] 启用面板服务`);
@@ -456,7 +454,7 @@ export const aplPanelServe = (_app, _storage) => {
 
 		_app.get('/measure/:size(\\d+)', async (req, res) => {
 
-			const isSignValid = checkSign(req.baseUrl + req.path, process.env.CLUSTER_SECRET, req.query);
+			const isSignValid = checkSign(req.baseUrl + req.path, nodeConfig.clusterSecret, req.query);
 			if(!isSignValid) return res.sendStatus(403);
 
 			const size = parseInt(req.params.size, 10);
@@ -511,7 +509,7 @@ export const aplPaneReplaceAddr = (host, port) => {
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(existsSync(addrFilePath)){
 		const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-		const nodeEnv = nowCfg.nodes?.[ClusterPort]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_ID]?.env;
+		const nodeEnv = nowCfg.nodes?.[nodeConfig.port]?.env ?? nowCfg.nodes?.[nodeConfig.clusterId]?.env;
 		address.host = nodeEnv?.clusterIp ??			nowCfg.nodes?._ALL_?.env?.clusterIp ??			host;
 		address.port = nodeEnv?.clusterPublicPort ??	nowCfg.nodes?._ALL_?.env?.clusterPublicPort ??	port;
 		console.log(`[AplPanel] 使用地址: ${address.host}:${address.port}`);

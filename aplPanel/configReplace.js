@@ -1,20 +1,26 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
-// 获取启动参数 -p=1234
-const ClusterPort = Number(process.argv.find(arg => arg.startsWith('-p='))?.slice(3)) || process.env.CLUSTER_PORT;
-
-export const aplPanelConfigReplace = (instance) => {
-
-	instance.port = ClusterPort;
+export let nodeConfig = {};
+if(true){
+	nodeConfig.port = Number(process.argv.find(arg => arg.startsWith('-p='))?.slice(3)) || process.env.CLUSTER_PORT;
+	nodeConfig.clusterId = process.env.CLUSTER_ID;
+	nodeConfig.clusterSecret = process.env.CLUSTER_SECRET;
 
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
-	if(!existsSync(addrFilePath)) return instance;
+	if(existsSync(addrFilePath)){
+		const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
+		const nodeEnv = nowCfg.nodes?.[nodeConfig.port]?.env ?? nowCfg.nodes?.[nodeConfig.clusterId]?.env;
+	
+		nodeConfig = {
+			...nowCfg.nodes?._ALL_?.env,
+			...nodeConfig,
+			...nodeEnv,
+		};
+	}
+}
 
-	const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-	const nodeEnv = nowCfg.nodes?.[ClusterPort]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_ID]?.env;
-
-	if(nodeEnv === undefined && nowCfg.nodes?._ALL_?.env === undefined) return instance;
+export const aplPanelConfigReplace = (instance) => {
 
 	// 获取所有可用的配置
 	const keyMap = Object.keys(instance).filter(key => ![
@@ -26,7 +32,7 @@ export const aplPanelConfigReplace = (instance) => {
 
 	let idx = 0;
 	for(const key of keyMap){
-		const newCfg = nodeEnv?.[key] ?? nowCfg.nodes?._ALL_?.env?.[key];
+		const newCfg = nodeConfig[key];
 		if(newCfg === undefined) continue;
 		idx++;
 		instance[key] = newCfg;
