@@ -14,5 +14,3 @@ if(true){
 	content = content.replace(/\/\* aplPanel Start \*\/.*?\/\* aplPanel End \*\//gm, '');
 	writeFileSync(filePath, content);
 }
-
-console.log(`[AplPanel] 卸载完毕`);

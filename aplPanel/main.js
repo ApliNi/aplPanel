@@ -472,28 +472,33 @@ export const aplPanelServe = (_app, _storage) => {
 		});
 
 		if(cfg.config?.cacheSpeedTestFileUrl){
-			console.log(`[AplPanel] 缓存测速文件重定向地址...`);
 
-			for(const size of cfg.config?.persistenceSpeedTestFiles ?? []){
-				const req = {
-					headers: {
-						// range: '',
-					},
-					params: {
-						size: size,
-					}
-				};
-				const res = {
-					status: () => { return res },
-					send: () => { return res },
-					location: (url) => {
-						console.log(`[AplPanel] 测速文件[${size}]: ${url}`);
-						return res;
-					},
-				};
-				_storage.express(`/__measure/${size}`, req, res);
-			}
+			const runCache = async (log = false) => {
+				console.log(`[AplPanel] 缓存测速文件重定向地址...`);
 
+				for(const size of cfg.config?.persistenceSpeedTestFiles ?? []){
+					const req = {
+						headers: {
+							// range: '',
+						},
+						params: {
+							size: size,
+						}
+					};
+					const res = {
+						status: () => { return res },
+						send: () => { return res },
+						location: (url) => {
+							if(log) console.log(`[AplPanel] 测速文件[${size}]: ${url}`);
+							return res;
+						},
+					};
+					_storage.express(`/__measure/${size}`, req, res);
+				}
+			};
+
+			runCache(true);
+			setInterval(runCache, 60 * 60 * 1000 + 3000);
 		}
 	}
 };

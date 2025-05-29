@@ -48,5 +48,3 @@ if(true){
 	}
 	writeFileSync(filePath, content);
 }
-
-console.log(`[AplPanel] 安装完毕`);
