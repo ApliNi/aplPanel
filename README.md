@@ -5,13 +5,10 @@ Node-OpenBMCLAPI Dashboard
 
 ## 安装
 1. [下载面板](https://github.com/ApliNi/aplPanel/releases), 将 `aplPanel` 目录解压到 OpenBMCLAPI 根目录下
-2. 运行 `node ./aplPanel/install.js`, 等待显示 `安装完毕`
-3. 重启 OpenBMCLAPI 节点
+2. 修改启动命令为 `node ./aplPanel/start.js`
 
 ### 面板
 面板地址: http://127.0.0.1:4000/dashboard/
-
-> 以下配置不影响面板运行 (如果遇到问题, 请提交 Issue)
 
 ### 启动参数
 - 指定端口: `-p=4000` - 设置节点监听端口, 可用于在配置文件中定位节点, 优先级小于配置中的 port
