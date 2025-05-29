@@ -1,7 +1,11 @@
 # aplPanel
-Node-OpenBMCLAPI Dashboard
+```yaml
+[AplPanel] ฅ^•ﻌ•^ฅ
+  | v0.1.12 ✦ OpenBmclApi 1.14.0
+  | https://github.com/ApliNi/aplPanel
+```
 
-为 OpenBMCLAPI Node 端制作的仪表板, 使用 (注入代码?) 的方式实现功能. [查看演示](https://bmclapi-2-node.ipacel.cc/dashboard/)
+为 OpenBMCLAPI Node 端制作的仪表板. [查看演示](https://bmclapi-2-node.ipacel.cc/dashboard/)
 
 ## 安装
 1. [下载面板](https://github.com/ApliNi/aplPanel/releases), 将 `aplPanel` 目录解压到 OpenBMCLAPI 根目录下
