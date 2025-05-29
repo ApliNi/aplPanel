@@ -1,13 +1,16 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
+// 获取启动参数 -p=1234
+const ClusterPort = process.argv.find(arg => arg.startsWith('-p='))?.slice(3);
+
 export const aplPanelConfigReplace = (instance) => {
 
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(!existsSync(addrFilePath)) return;
 
 	const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-	const nodeEnv = nowCfg.nodes?.[process.env.CLUSTER_ID]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_PORT]?.env;
+	const nodeEnv = nowCfg.nodes?.[ClusterPort ?? process.env.CLUSTER_PORT]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_ID]?.env;
 
 	// 获取所有可用的配置
 	const keyMap = Object.keys(instance).filter(key => ![

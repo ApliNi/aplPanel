@@ -6,6 +6,9 @@ import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDa
 import { createHash } from 'crypto';
 import { isIPv4, isIPv6 } from 'net';
 
+// 获取启动参数 -p=1234
+const ClusterPort = process.argv.find(arg => arg.startsWith('-p='))?.slice(3);
+
 const cfg = {
 	config: {},
 	webNodeIdx: -1,
@@ -20,7 +23,7 @@ await (async () => {
 	if(cfgFile.nodes){
 		cfg.nodeIds = Object.keys(cfgFile.nodes);
 		const idx1 = cfg.nodeIds.indexOf(process.env.CLUSTER_ID);
-		const idx2 = cfg.nodeIds.indexOf(process.env.CLUSTER_PORT);
+		const idx2 = cfg.nodeIds.indexOf(ClusterPort ?? process.env.CLUSTER_PORT);
 		cfg.webNodeIdx = idx1 === -1 ? idx2 : idx1;
 
 		for(const nodeId in cfgFile.nodes){
@@ -289,7 +292,7 @@ export const aplPanelListener = async (req, bytes, hits) => {
 export const aplPanelServe = (_app, _storage) => {
 	console.log(`[AplPanel] aplPanelServe`);
 
-	const nodeCfg = cfg.config.nodes[process.env.CLUSTER_ID] ?? cfg.config.nodes[process.env.CLUSTER_PORT];
+	const nodeCfg = cfg.config.nodes[ClusterPort ?? process.env.CLUSTER_PORT] ?? cfg.config.nodes[process.env.CLUSTER_ID];
 
 	if(nodeCfg?.enablePanel){
 		console.log(`[AplPanel] 启用面板服务`);
@@ -332,8 +335,12 @@ export const aplPanelServe = (_app, _storage) => {
 
 			// ./api/stats?idx=
 			const inp = {
-				idx: Number(req.query?.idx ?? 0),
+				idx: parseInt(req.query?.idx ?? 0),
 			};
+
+			if(!cfg.nodeIds[inp.idx] || inp.idx === -1){
+				inp.idx = 0;
+			}
 
 			/**
 			 * 获取一个本地或远程节点的数据
@@ -355,7 +362,15 @@ export const aplPanelServe = (_app, _storage) => {
 				}
 			};
 
-			if(inp.idx !== cfg.webNodeIdx && cfg.nodeIds[inp.idx]){
+			if(inp.idx === cfg.webNodeIdx){
+				// 提供当前节点的数据
+				res.json({
+					statsData: statsData,
+					statsDataTemp: statsDataTemp,
+					webNodes: cfg.webNodes,
+					webNodeIdx: cfg.webNodeIdx,
+				});
+			}else{
 				// 提供其他节点的数据
 				try{
 
@@ -418,14 +433,6 @@ export const aplPanelServe = (_app, _storage) => {
 					console.warn(`[AplPanel] 处理其他节点统计数据时出错`, err);
 					res.json(null);
 				}
-			}else{
-				// 提供当前节点的数据
-				res.json({
-					statsData: statsData,
-					statsDataTemp: statsDataTemp,
-					webNodes: cfg.webNodes,
-					webNodeIdx: cfg.webNodeIdx,
-				});
 			}
 		});
 	}
@@ -504,7 +511,7 @@ export const aplPaneReplaceAddr = (host, port) => {
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(existsSync(addrFilePath)){
 		const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-		const nodeEnv = nowCfg.nodes?.[process.env.CLUSTER_ID]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_PORT]?.env;
+		const nodeEnv = nowCfg.nodes?.[ClusterPort ?? process.env.CLUSTER_PORT]?.env ?? nowCfg.nodes?.[process.env.CLUSTER_ID]?.env;
 		address.host = nodeEnv?.clusterIp ??			nowCfg.nodes?._ALL_?.env?.clusterIp ??			host;
 		address.port = nodeEnv?.clusterPublicPort ??	nowCfg.nodes?._ALL_?.env?.clusterPublicPort ??	port;
 		console.log(`[AplPanel] 使用地址: ${address.host}:${address.port}`);
