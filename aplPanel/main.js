@@ -1,6 +1,6 @@
 import express from 'express';
 import { existsSync, mkdirSync, readFileSync, writeFile, writeFileSync } from 'fs';
-import { readFile } from 'fs/promises';
+import { readFile, rename } from 'fs/promises';
 import path from 'path';
 import { deviceList, sleep, resetStatsDataTemp, addObjValueNumber, getNowStatsDataDate, deepMergeObject, generateSpeedTestFile } from './util.js';
 import { createHash } from 'crypto';
@@ -20,9 +20,7 @@ await (async () => {
 	cfg.config = cfgFile;
 	if(cfgFile.nodes){
 		cfg.nodeIds = Object.keys(cfgFile.nodes);
-		const idx1 = cfg.nodeIds.indexOf(nodeConfig.port);
-		const idx2 = cfg.nodeIds.indexOf(nodeConfig.clusterId);
-		cfg.webNodeIdx = idx1 === -1 ? idx2 : idx1;
+		cfg.webNodeIdx = cfg.nodeIds.indexOf(nodeConfig.clusterId);
 
 		for(const nodeId in cfgFile.nodes){
 			const node = cfgFile.nodes[nodeId];
@@ -91,7 +89,15 @@ const scrollingUpdateStatsData = (sd) => {
 };
 
 const dataPath = path.resolve(cfg.config.dataPath);
-const statsFilePath = path.join(dataPath, `./stats_${nodeConfig.clusterId || 'default'}.json`);
+const statsFilePath = path.join(dataPath, `./stats_${nodeConfig.clusterId}.json`);
+
+if(true){
+	const fixPath = path.join(dataPath, `./stats_${cfg.config.nodes[nodeConfig.clusterId].env.port}.json`);
+	if(existsSync(fixPath)){
+		await rename(fixPath, statsFilePath);
+	}
+}
+
 await (async () => {
 
 	// 创建数据目录
@@ -290,7 +296,7 @@ export const aplPanelListener = async (req, bytes, hits) => {
 export const aplPanelServe = (_app, _storage) => {
 	console.log(`[AplPanel] aplPanelServe`);
 
-	const nodeCfg = cfg.config.nodes[nodeConfig.port] ?? cfg.config.nodes[nodeConfig.clusterId];
+	const nodeCfg = cfg.config.nodes[nodeConfig.clusterId];
 
 	if(nodeCfg?.enablePanel){
 		console.log(`[AplPanel] 启用面板服务`);
@@ -352,7 +358,9 @@ export const aplPanelServe = (_app, _storage) => {
 						const data = await res.json();
 						return data.statsData;
 					}else{
-						return JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
+						return JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }).catch(async () =>
+							await readFile(path.join(dataPath, `./stats_${cfg.config.nodes[nodeId].env.port}.json`), { encoding: 'utf8' })
+						));
 					}
 				}catch(err){
 					console.warn(`[AplPanel] 读取其他节点统计数据时出错 [${nodeId}]:`, err);
@@ -376,20 +384,10 @@ export const aplPanelServe = (_app, _storage) => {
 					if(cfg.nodeIds[inp.idx] === '_ALL_'){
 						// 读取所有节点的信息
 						for(let idx = 0; idx < cfg.nodeIds.length; idx++){
-							if(nodeDataCache[idx]){
-								continue;
-							}
-							if(idx === cfg.webNodeIdx){
-								continue;
-							}
+							if(nodeDataCache[idx] || idx === cfg.webNodeIdx || idx === '_ALL_') continue;
 							const nodeId = cfg.nodeIds[idx];
-							if(nodeId.length !== 24){
-								continue;
-							}
 							const sd = await getNodeStatsData(nodeId);
-							if(!sd){
-								continue;
-							}
+							if(!sd) continue;
 							nodeDataCache[idx] = sd;
 							scrollingUpdateStatsData(nodeDataCache[idx]);
 						}
@@ -507,7 +505,7 @@ export const aplPaneReplaceAddr = (host, port) => {
 	const addrFilePath = path.resolve('./aplPanelConfig.json');
 	if(existsSync(addrFilePath)){
 		const nowCfg = JSON.parse(readFileSync(addrFilePath, { encoding: 'utf8' }));
-		const nodeEnv = nowCfg.nodes?.[nodeConfig.port]?.env ?? nowCfg.nodes?.[nodeConfig.clusterId]?.env;
+		const nodeEnv = nowCfg.nodes?.[nodeConfig.clusterId]?.env;
 		address.host = nodeEnv?.clusterIp ??			nowCfg.nodes?._ALL_?.env?.clusterIp ??			host;
 		address.port = nodeEnv?.clusterPublicPort ??	nowCfg.nodes?._ALL_?.env?.clusterPublicPort ??	port;
 		console.log(`[AplPanel] 使用地址: ${address.host}:${address.port}`);

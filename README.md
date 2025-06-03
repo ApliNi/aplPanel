@@ -1,7 +1,7 @@
 # aplPanel
 ```yaml
 [AplPanel] ฅ^•ﻌ•^ฅ
-  | v0.1.12 ✦ OpenBmclApi 1.14.0
+  | v0.2.0 ✦ OpenBmclApi 1.14.0
   | https://github.com/ApliNi/aplPanel
 ```
 
@@ -15,12 +15,13 @@
 面板地址: http://127.0.0.1:4000/dashboard/
 
 ### 启动参数
-- 指定端口: `-p=4000` - 设置节点监听端口, 可用于在配置文件中定位节点, 优先级小于配置中的 port
+- 指定节点 ID: `--id=CLUSTER_ID` - 设置节点 ID, 用于在配置文件中定位节点
 
 ### 配置文件 & 多个节点
 面板支持在一个节点上切换显示多个节点的信息.
-在 `./aplPanelConfig.json` 中配置每个节点的 CLUSTER_ID 或 CLUSTER_PORT 和显示文本即可.
+在 `./aplPanelConfig.json` 中配置每个节点的 CLUSTER_ID 和显示文本即可.
 
+**示例配置**
 ```json
 {
 	"dataPath": "./aplPanel/data",
@@ -39,7 +40,7 @@
 				"clusterPublicPort": 443
 			}
 		},
-		"CLUSTER_ID or CLUSTER_PORT": {
+		"CLUSTER_ID": {
 			"enablePanel": true,
 			"name": "[Node.1]",
 			"title": "ApliNi's OpenBMCLAPI Dashboard 1",
@@ -49,7 +50,7 @@
 				"clusterPublicPort": 4001
 			}
 		},
-		"4002": {
+		"CLUSTER_ID_2": {
 			"enablePanel": false,
 			"name": "[Node.2]",
 			"title": "ApliNi's OpenBMCLAPI Dashboard 2",

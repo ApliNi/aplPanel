@@ -4,7 +4,7 @@ if(cluster.isPrimary){
 
 	console.log(`\x1B[92m
 [AplPanel] ฅ^•ﻌ•^ฅ
-  | v0.1.12 ✦ OpenBmclApi 1.14.0
+  | v0.2.0 ✦ OpenBmclApi 1.14.0
   | https://github.com/ApliNi/aplPanel
 \x1B[0m`);
 	
