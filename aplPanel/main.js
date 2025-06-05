@@ -155,6 +155,10 @@ await (async () => {
 			statsData.all.network.v4 = Math.floor(statsData.all.hits * v4Ratio);
 			statsData.all.network.v6 = statsData.all.hits - statsData.all.network.v4;
 		}
+		// v0.2.1: 移除 network.none
+		if(statsData.all.network.none){
+			delete statsData.all.network.none;
+		}
 	})();
 
 	scrollingUpdateStatsData(statsData);
@@ -271,7 +275,6 @@ export const aplPanelListener = async (req, bytes, hits) => {
 
 		let ip = cfg.config?.ip ? req.headers[cfg.config.ip] || req.ip : req.ip;
 		if(!ip){
-			statsDataTemp.network.none++;
 			return;
 		}
 
@@ -288,7 +291,6 @@ export const aplPanelListener = async (req, bytes, hits) => {
 		}
 		else{
 			console.log(`[AplPanel] [debug] 未知的 IP 类型: ${ip}`);
-			statsDataTemp.network.none++;
 		}
 
 	}catch(err){
