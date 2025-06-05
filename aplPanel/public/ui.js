@@ -157,19 +157,7 @@ const loadPieChart = (el, data = {}, _data = {}) => {
 
 	const thisChart = echarts.init(el);
 	thisChart.setOption(Object.assign({
-		series: [
-			{
-				name: 'Nightingale Chart',
-				type: 'pie',
-				radius: [20, 70],
-				center: ['50%', '50%'],
-				roseType: 'area',
-				itemStyle: {
-					borderRadius: 8
-				},
-				data: [],
-			},
-		],
+		series: [],
 		tooltip: {
 			trigger: 'item',
 			borderWidth: 0,
@@ -178,7 +166,7 @@ const loadPieChart = (el, data = {}, _data = {}) => {
 					<div style="line-height:1;">
 						${params.marker}
 						<span style="font-size:14px;color:#666;font-weight:400;margin-left:2px">${params.name}</span>
-						<span style="float:right;margin-left:20px;font-size:14px;color:#666;font-weight:900">${lib.numberFormat(params.value, 2)}</span>
+						<span style="float:right;margin-left:20px;font-size:14px;color:#666;font-weight:900">${params.value.toFixed(2)}%</span>
 					</div>
 				`;
 			},
@@ -214,7 +202,7 @@ const loadBarChart = (el, data = {}, _data = {}) => {
 					<div style="line-height:1;">
 						${params[0].marker}
 						<span style="font-size:14px;color:#666;font-weight:400;margin-left:2px">${params[0].name}</span>
-						<span style="float:right;margin-left:20px;font-size:14px;color:#666;font-weight:900">${lib.numberFormat(params[0].value, 2)}</span>
+						<span style="float:right;margin-left:20px;font-size:14px;color:#666;font-weight:900">${params[0].value.toFixed(2)}%</span>
 					</div>
 				`;
 			},
@@ -233,7 +221,7 @@ const loadBarChart = (el, data = {}, _data = {}) => {
 		xAxis: {
 			type: 'value',
 			axisLabel: {
-				formatter: (value) => lib.numberFormat(value),
+				// formatter: (value) => lib.numberFormat(value),
 			},
 			splitLine: {
 				show: true,
@@ -746,23 +734,29 @@ const loadStatsData = async () => {
 			});
 		}
 
-		// 取数值最大的前10个, 过滤 0 值
+		// 过滤 0 值, 取数值最大的前10个
 		const top10 = pieData.filter(i => i.value > 0).sort((a, b) => b.value - a.value).slice(0, 10);
+
+		// 转换为百分比
+		const top10All = top10.reduce((acc, cur) => acc + cur.value, 0);
+		top10.map(i => i.value = (i.value / top10All) * 100);
 
 		loadPieChart(document.getElementById('chart_stats_device'), {
 			series: [
 				{
 					// name: '常见用户代理',
 					type: 'pie',
-					radius: [20, 70],
-					center: ['50%', '50%'],
-					roseType: 'area',
+					radius: [42, 70],
+					center: ['52%', '50%'],
+					padAngle: 2,
+					minAngle: 7,
 					itemStyle: {
-						borderRadius: 8
+						borderRadius: 4,
 					},
 					data: top10,
 					label: {
-						color: '#7f7f7fb5'
+						minMargin: 4,
+						color: '#7f7f7fb5',
 					},
 				},
 			]
@@ -770,6 +764,10 @@ const loadStatsData = async () => {
 
 		resolve();
 	});
+
+	const netAll = statsData.all.network.v4 + statsData.all.network.v6;
+	const v4 = statsData.all.network.v4 / netAll * 100;
+	const v6 = statsData.all.network.v6 / netAll * 100;
 
 	await new Promise(async (resolve, reject) => {
 
@@ -779,13 +777,13 @@ const loadStatsData = async () => {
 					type: 'bar',
 					data: [
 						{
-							value: statsData.all.network.v4,
+							value: v4,
 							itemStyle: {
 								color: '#06B0FF'
 							}
 						},
 						{
-							value: statsData.all.network.v6,
+							value: v6,
 							itemStyle: {
 								color: '#ff8c00'
 							}

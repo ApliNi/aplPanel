@@ -77,6 +77,15 @@ const scrollingUpdateStatsData = (sd) => {
 		sd.heatmap.splice(0, dayDiff);
 		sd.heatmap.push(...Array.from({ length: Math.min(dayDiff, 365) }, () => ([0, 0])));
 		sd.date.day += yearDiff;
+
+		// 减小常见用户代理和网络类型计数器的数值, 使近期新的数据能够更快反映在图表上
+		if(true){
+			sd.network.v4 *= 0.85;
+			sd.network.v6 *= 0.85;
+			for(const key in sd.device){
+				sd.device[key] *= 0.85;
+			}
+		}
 	}
 	const hourDiff = nowDate.hour - sd.date.hour;
 	if(hourDiff > 0){
