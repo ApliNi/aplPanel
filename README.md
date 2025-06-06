@@ -112,12 +112,11 @@ sslCert = env.get('SSL_CERT').asString();
 ```
 
 ## 更新
-通常, 覆盖文件然后重新运行安装即可.
+覆盖文件然后重新运行即可.
 
 ## 卸载
-1. 运行 `node ./aplPanel/uninstall.js`, 等待显示 `卸载完毕`
-2. 重启 OpenBMCLAPI 节点
-3. 删除 `aplPanel` 目录
+1. 运行 `node ./aplPanel/uninstall.js`
+2. 删除 `aplPanel` 目录
 
 ---
 
