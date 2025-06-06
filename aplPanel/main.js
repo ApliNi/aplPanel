@@ -13,8 +13,6 @@ const cfg = {
 	webNodes: [],
 	nodeIds: [],
 	statsExcludeIp: {},
-
-	persistenceSpeedTestFileFinish: false,
 };
 await (async () => {
 	const cfgFile = JSON.parse(readFileSync(path.resolve('./aplPanelConfig.json'), { encoding: 'utf8' }));
@@ -556,7 +554,6 @@ export const aplPaneSyncFileFinish = async (_storage) => {
 			await generateSpeedTestFile(_storage, size);
 		}
 	}
-	cfg.persistenceSpeedTestFileFinish = true;
 };
 
 /**

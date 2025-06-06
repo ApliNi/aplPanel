@@ -1,5 +1,5 @@
 # aplPanel
-```yaml
+```js
 [AplPanel] ฅ^•ﻌ•^ฅ
   | v0.2.0 ✦ OpenBmclApi 1.14.0
   | https://github.com/ApliNi/aplPanel
