@@ -35,6 +35,7 @@
 				"byoc": false,
 				"clusterId": "xxxxxxx",
 				"clusterSecret": "xxxxxxx",
+				"storage": "alist",
 				"storageOpts": { "url":"http://127.0.0.1:5244/dav", "basePath":"pan/OpenBmclApi/download", "username":"username", "password":"password" },
 				"clusterIp": "oba2.site.com",
 				"clusterPublicPort": 443

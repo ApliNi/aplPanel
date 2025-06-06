@@ -13,6 +13,8 @@ const cfg = {
 	webNodes: [],
 	nodeIds: [],
 	statsExcludeIp: {},
+
+	persistenceSpeedTestFileFinish: false,
 };
 await (async () => {
 	const cfgFile = JSON.parse(readFileSync(path.resolve('./aplPanelConfig.json'), { encoding: 'utf8' }));
@@ -54,6 +56,29 @@ for(const deviceName in deviceList){
 		statsDataTemp.device[deviceName] = 0;
 	}
 }
+// const demo = {
+// 	date: getNowStatsDataDate(),
+// 	hours: Array.from({ length: 25 }, () => ({ hits: 0, bytes: 0 })),
+// 	months: Array.from({ length: 13 }, () => ({ hits: 0, bytes: 0 })),
+// 	years: Array.from({ length: 7 }, () => ({ hits: 0, bytes: 0 })),
+// 	heatmap: Array.from({ length: 365 }, () => ([0, 0])),
+// 	all: { // structuredClone(statsDataTemp),
+// 		hits: 0,
+// 		bytes: 0,
+// 		device: {},
+// 		network: {
+// 			v4: 0,
+// 			v6: 0,
+// 			none: 0,
+// 		},
+// 	},
+// 	_worker: {
+// 		mainThread: 0,
+// 		saveTime: 0,
+// 		syncData: {},
+// 	},
+// 	_startLimiter: [-1, 0],
+// }
 
 let statsData;
 
@@ -80,10 +105,10 @@ const scrollingUpdateStatsData = (sd) => {
 
 		// 减小常见用户代理和网络类型计数器的数值, 使近期新的数据能够更快反映在图表上
 		if(true){
-			sd.network.v4 *= 0.85;
-			sd.network.v6 *= 0.85;
-			for(const key in sd.device){
-				sd.device[key] *= 0.85;
+			sd.all.network.v4 *= 0.85;
+			sd.all.network.v6 *= 0.85;
+			for(const key in sd.all.device){
+				sd.all.device[key] *= 0.85;
 			}
 		}
 	}
@@ -484,12 +509,8 @@ export const aplPanelServe = (_app, _storage) => {
 			console.log(`[AplPanel] 缓存测速文件重定向地址...`);
 			for(const size of cfg.config?.persistenceSpeedTestFiles ?? []){
 				const req = {
-					headers: {
-						// range: '',
-					},
-					params: {
-						size: size,
-					}
+					headers: {},
+					params: { size: size },
 				};
 				const res = {
 					status: () => { return res },
@@ -499,7 +520,7 @@ export const aplPanelServe = (_app, _storage) => {
 						return res;
 					},
 				};
-				_storage.express(`/__measure/${size}`, req, res);
+				_storage.express(`/__measure/${size}`, req, res).catch((err) => {});
 			}
 		}
 	}
@@ -536,6 +557,7 @@ export const aplPaneSyncFileFinish = async (_storage) => {
 			await generateSpeedTestFile(_storage, size);
 		}
 	}
+	cfg.persistenceSpeedTestFileFinish = true;
 };
 
 /**
