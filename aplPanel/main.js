@@ -394,9 +394,7 @@ export const aplPanelServe = (_app, _storage) => {
 						const data = await res.json();
 						return data.statsData;
 					}else{
-						return JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }).catch(async () =>
-							await readFile(path.join(dataPath, `./stats_${cfg.config.nodes[nodeId].env.port}.json`), { encoding: 'utf8' })
-						));
+						return JSON.parse(await readFile(path.join(dataPath, `./stats_${nodeId}.json`), { encoding: 'utf8' }));
 					}
 				}catch(err){
 					console.warn(`[AplPanel] 读取其他节点统计数据时出错 [${nodeId}]:`, err);
@@ -420,8 +418,9 @@ export const aplPanelServe = (_app, _storage) => {
 					if(cfg.nodeIds[inp.idx] === '_ALL_'){
 						// 读取所有节点的信息
 						for(let idx = 0; idx < cfg.nodeIds.length; idx++){
-							if(nodeDataCache[idx] || idx === cfg.webNodeIdx || idx === '_ALL_') continue;
+							if(nodeDataCache[idx] || idx === cfg.webNodeIdx) continue;
 							const nodeId = cfg.nodeIds[idx];
+							if(nodeId === '_ALL_') continue;
 							const sd = await getNodeStatsData(nodeId);
 							if(!sd) continue;
 							nodeDataCache[idx] = sd;
