@@ -297,9 +297,7 @@ export const aplPanelListener = async (req, bytes, hits) => {
 		}
 
 		let ip = cfg.config?.ip ? req.headers[cfg.config.ip] || req.ip : req.ip;
-		if(!ip){
-			return;
-		}
+		if(!ip) return;
 
 		if(ip.startsWith('::ffff:')) ip = ip.substring(7);
 
@@ -308,12 +306,8 @@ export const aplPanelListener = async (req, bytes, hits) => {
 
 		if(isIPv4(ip)){
 			statsDataTemp.network.v4++;
-		}
-		else if(isIPv6(ip)){
+		}else{
 			statsDataTemp.network.v6++;
-		}
-		else{
-			console.log(`[AplPanel] [debug] 未知的 IP 类型: ${ip}`);
 		}
 
 	}catch(err){
@@ -492,9 +486,12 @@ export const aplPanelServe = (_app, _storage) => {
 			if(isNaN(size) || size > 200) return res.sendStatus(400);
 
 			// 如果预建测速文件, 则不检查文件存在
-			if(!cfg.config?.persistenceSpeedTestFiles?.includes(size)){
-				await generateSpeedTestFile(_storage, size);
-			}
+			// if(!cfg.config?.persistenceSpeedTestFiles?.includes(size)){
+			// 	await generateSpeedTestFile(_storage, size);
+			// }
+
+			// 始终检查测速文件存在
+			await generateSpeedTestFile(_storage, size);
 
 			console.log(`[AplPanel] 提供测速文件 ./__measure/${size}`);
 
