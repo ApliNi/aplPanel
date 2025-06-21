@@ -19,12 +19,12 @@ if(true){
 	}
 
 	if(nodeConfig.clusterId?.length !== 24){
-		console.warn('[aplPanel] 集群 ID 错误，请检查 --id 参数或 CLUSTER_ID 环境变量');
+		console.warn('[AplPanel] 集群 ID 错误，请检查 --id 参数或 CLUSTER_ID 环境变量');
 		process.exit(1);
 	}
 
 	if(nodeConfig.clusterSecret?.length !== 32){
-		console.warn('[aplPanel] 集群密钥错误，请检查配置文件或 CLUSTER_SECRET 环境变量');
+		console.warn('[AplPanel] 集群密钥错误，请检查配置文件或 CLUSTER_SECRET 环境变量');
 		process.exit(1);
 	}
 }
@@ -47,7 +47,7 @@ export const aplPanelConfigReplace = (instance) => {
 		instance[key] = newCfg;
 	}
 
-	console.log(`[aplPanel] 替换 ${idx} 项配置`);
+	console.log(`[AplPanel] 替换 ${idx} 项配置`);
 
 	return instance;
 };
