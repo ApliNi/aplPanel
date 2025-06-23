@@ -103,10 +103,10 @@ const scrollingUpdateStatsData = (sd) => {
 
 		// 等比例缩小数据, 使新数据更快反映在图表上
 		if(true){
-			sd.all.network.v4 *= 0.85;
-			sd.all.network.v6 *= 0.85;
+			sd.all.network.v4 *= 0.75;
+			sd.all.network.v6 *= 0.75;
 			for(const key in sd.all.device){
-				sd.all.device[key] *= 0.85;
+				sd.all.device[key] *= 0.75;
 			}
 		}
 	}
