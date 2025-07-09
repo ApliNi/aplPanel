@@ -5,7 +5,7 @@
 	"cacheSpeedTestFileUrl": true,
 	"ip": "",
 	"statsExcludeIp": [ "127.0.0.1" ],
-	"dayStartLimiter": 24,
+	"dayStartLimiter": 14,
 	"startDelay": 10,
 	"nodes": {
 		"_ALL_": {
