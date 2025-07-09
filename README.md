@@ -34,6 +34,7 @@
 	"ip": "",
 	"statsExcludeIp": [ "127.0.0.1" ],
 	"dayStartLimiter": 24,
+	"startDelay": 10,
 	"nodes": {
 		"_ALL_": {
 			"enablePanel": true,
@@ -79,6 +80,7 @@
 - `ip`: 留空使用默认获取的 ip 地址, 可选择请求头中的 ip 地址 (如填写 `x-forwarded-for` 或 `cf-connecting-ip`)
 - `statsExcludeIp`: 用于排除统计中的本地 ip 地址
 - `dayStartLimiter`: 限制每天的启动次数, 超过次数则等待到第二天再启动
+- `startDelay`: 启动延迟, 单位秒
 - `env`: 存放节点默认配置
 - `nodes`: 在面板上显示的其他节点信息
 	- `enable`: [默认 true] 允许关闭这个节点的 web 面板, 但保持数据记录继续运行 (这几乎不会节省性能)

@@ -37,6 +37,11 @@ await (async () => {
 	}
 
 	cfg.config.dataPath ??= './aplPanel/data';
+
+	if(cfg.config?.startDelay > 0){
+		console.log(`[AplPanel] 启动延时 ${cfg.config.startDelay} 秒...`);
+		await sleep(cfg.config.startDelay * 1000);
+	}
 })();
 
 const statsDataTemp = {
