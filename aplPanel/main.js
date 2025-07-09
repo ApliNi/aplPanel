@@ -139,12 +139,17 @@ await (async () => {
 
 	// 读取统计数据
 	const readStatsFile = async () => {
-		try{
-			const data = await readFile(statsFilePath, { encoding: 'utf8' });
-			statsData = JSON.parse(data);
-		}catch(err){
-			console.warn(`[AplPanel] 读取统计数据时出错`, err);
+		for(let i = 20; i--;){
+			try{
+				const data = await readFile(statsFilePath, { encoding: 'utf8' });
+				statsData = JSON.parse(data);
+				return;
+			}catch(err){
+				console.log(`[AplPanel] 读取统计数据失败`, err);
+				await sleep(300);
+			}
 		}
+		throw new Error(`[AplPanel] 读取统计数据失败`);
 	};
 
 	// 初始化统计数据
