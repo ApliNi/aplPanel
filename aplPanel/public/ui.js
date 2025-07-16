@@ -35,20 +35,17 @@ const lib = {
 	},
 };
 
+const charts = {};
+setInterval(() => {
+	for(const el in charts){
+		charts[el].resize();
+	}
+}, 200);
+
 const loadLineChart = (el, data = {}, _data = {}) => {
 
-	let throttle = false;
-	const ro = new ResizeObserver((entries) => {
-		if(throttle) return;
-		throttle = true;
-		setTimeout(() => {
-			throttle = false;
-			thisChart?.resize();
-		}, 200);
-	});
-	ro.observe(el);
-
 	const thisChart = echarts.init(el);
+	charts[el] = thisChart;
 	thisChart.setOption(Object.assign({
 		grid: {
 			top: 30,
@@ -144,18 +141,8 @@ const loadLineChart = (el, data = {}, _data = {}) => {
 
 const loadPieChart = (el, data = {}, _data = {}) => {
 
-	let throttle = false;
-	const ro = new ResizeObserver((entries) => {
-		if(throttle) return;
-		throttle = true;
-		setTimeout(() => {
-			throttle = false;
-			thisChart?.resize();
-		}, 200);
-	});
-	ro.observe(el);
-
 	const thisChart = echarts.init(el);
+	charts[el] = thisChart;
 	thisChart.setOption(Object.assign({
 		series: [],
 		tooltip: {
@@ -176,18 +163,8 @@ const loadPieChart = (el, data = {}, _data = {}) => {
 
 const loadBarChart = (el, data = {}, _data = {}) => {
 
-	let throttle = false;
-	const ro = new ResizeObserver((entries) => {
-		if(throttle) return;
-		throttle = true;
-		setTimeout(() => {
-			throttle = false;
-			thisChart?.resize();
-		}, 200);
-	});
-	ro.observe(el);
-
 	const thisChart = echarts.init(el);
+	charts[el] = thisChart;
 	thisChart.setOption(Object.assign({
 		grid: {
 			top: 30,
