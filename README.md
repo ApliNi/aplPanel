@@ -7,6 +7,8 @@
 
 为 OpenBMCLAPI Node 端制作的仪表板. [查看演示](https://bmclapi-2-node.ipacel.cc/dashboard/)
 
+![preview](./preview.png)
+
 ## 安装
 1. [下载面板](https://github.com/ApliNi/aplPanel/releases), 将 `aplPanel` 目录解压到 OpenBMCLAPI 根目录下
 2. 修改启动命令为 `node ./aplPanel/start.js`
